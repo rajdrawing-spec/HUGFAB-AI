@@ -32,7 +32,17 @@ const nextConfig: NextConfig = {
   },
 
   env: {
-    NEXT_PUBLIC_BUILD_SHA: process.env.GITHUB_SHA ?? 'dev',
+    /**
+     * Surfaced by /api/health, so the live commit is knowable without SSH, and
+     * compared against the deployed SHA by the deploy job's health check.
+     *
+     * The explicit variable wins over GITHUB_SHA on purpose: when rolling back
+     * through workflow_dispatch, GITHUB_SHA is the workflow's own ref rather
+     * than the commit being deployed. Reading it first would make the health
+     * check reject a good rollback and roll it straight back again.
+     */
+    NEXT_PUBLIC_BUILD_SHA:
+      process.env.NEXT_PUBLIC_BUILD_SHA ?? process.env.GITHUB_SHA ?? 'dev',
   },
 };
 

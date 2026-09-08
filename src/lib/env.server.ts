@@ -34,7 +34,19 @@ const nodeEnv = (process.env.NODE_ENV ?? 'development') as NodeEnv;
 /** Escape hatch for container image builds and one-off CI jobs. */
 const skipValidation = process.env.SKIP_ENV_VALIDATION === 'true';
 
-export const env: ServerEnv = parseServerEnv(process.env, 'development');
+/**
+ * Next inlines `process.env.NEXT_PUBLIC_*` by textual substitution at build
+ * time. A whole-object read of `process.env` is not rewritten, so the build SHA
+ * has to be referenced by its literal name here — otherwise the standalone
+ * server, whose environment has no such variable, silently reports 'dev' and
+ * the deploy job's health check can never match the commit it just shipped.
+ */
+const rawEnv = {
+  ...process.env,
+  NEXT_PUBLIC_BUILD_SHA: process.env.NEXT_PUBLIC_BUILD_SHA,
+};
+
+export const env: ServerEnv = parseServerEnv(rawEnv, 'development');
 
 export const isProduction = env.NODE_ENV === 'production';
 export const isDevelopment = env.NODE_ENV === 'development';

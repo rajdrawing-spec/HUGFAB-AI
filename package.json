@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "db:verify": "./scripts/verify-migration.sh"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.73.0",

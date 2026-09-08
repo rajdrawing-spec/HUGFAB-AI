@@ -180,7 +180,7 @@ Every table gets RLS enabled at creation. Public catalogue tables are read-only 
 
 ---
 
-## 6. Implementation status (2026-09-08)
+## 6. Implementation status (2026-09-08, updated)
 
 Phase 0 was executed in part. The work items that needed none of the five open
 decisions are built; the two that do are not started, and neither is guessed at.
@@ -190,13 +190,13 @@ decisions are built; the two that do are not started, and neither is guessed at.
 | 0.1 Project scaffold | **Done** | Next.js 15 App Router, React 19, TypeScript strict (plus `noUncheckedIndexedAccess`, `noUnusedLocals`), Tailwind v4, ESLint 9 flat config, Prettier. |
 | 0.2 Git workflow | **Partial** | `CONTRIBUTING.md` and the PR template are committed. Creating `develop` and protecting `main` are repository settings — see the checklist in `CONTRIBUTING.md`. |
 | 0.3 Environment config | **Done** | `.env.example`, Zod-validated env, `server-only` guard, fail-fast at server boot. |
-| 0.4 Database | **Not started** | Blocked: the embedding model fixes `vector(N)` in migration 0001. |
-| 0.5 Authentication | **Code done, unproven** | Cookie-SSR clients, `requireUser`/`requireAdmin`, session refresh in middleware, login/signup/settings shells. Cannot be exercised until a Supabase project exists. |
+| 0.4 Database | **Written and verified; not applied** | `0001_core.sql` creates all 11 tables with RLS, policies, grants, triggers and indexes. Executed against a real Postgres 16 + pgvector with 15 behavioural assertions (`npm run db:verify`). Only the `vector(N)` column is deferred to `0002`, since the embedding model is still undecided. Needs a Supabase project to be applied. |
+| 0.5 Authentication | **Code done, schema-backed, unproven end to end** | Cookie-SSR clients (now typed against the schema), `requireUser`/`requireAdmin`, session refresh in middleware, login/signup/settings shells. The `profiles` row and the anti-escalation trigger it depends on now exist in 0001 and are asserted. Still needs a Supabase project for a real signup. |
 | 0.6 Design tokens and primitives | **Done** | Tokens from the UI/UX Design Guide v1.0. Primitives: Button, Input, Card, Modal, Sheet, Toast, Badge, Chip, Header, Footer, BottomNavigation. |
 | 0.7 Security baseline | **Done** | Zod validation helpers, typed error envelope, rate limiter, nonce CSP and security headers, magic-byte upload validation, server-side role checks. |
 | 0.8 Observability | **Done** | Sentry and PostHog behind env flags and lazily imported; structured logger; `/api/health`. |
-| 0.9 CI/CD | **Partial** | CI is live and blocking. Deploy is blocked on the Hostinger plan decision. |
-| 0.10 Docs and tests | **Done** | This document plus `database.md`, `deployment.md`, `design-system.md`, `CONTRIBUTING.md`, `README.md`. Vitest with 33 tests across money, env and upload validation. |
+| 0.9 CI/CD | **CI live; deploy written and dormant** | CI blocking on every PR. `deploy.yml` implements build → rsync → symlink swap → `pm2 reload` → health check → automatic rollback, gated on the `DEPLOY_ENABLED` variable so it is inert until switched on. PM2 process file and Nginx template committed. Needs the plan decision plus SSH secrets. |
+| 0.10 Docs and tests | **Done** | This document plus `database.md`, `deployment.md`, `design-system.md`, `ui-ux-guide.md`, `user-flows.md`, `CONTRIBUTING.md`, `README.md`. Vitest with 33 tests across money, env and upload validation, plus 15 database assertions run by `npm run db:verify`. |
 
 ### 6.1 Decisions taken while building
 
@@ -229,7 +229,26 @@ early rather than late.
    palette was extrapolated and is marked as derived in `tokens.css`. It needs a
    designer's eye before Phase 1 ships.
 
-7. **The UI/UX concept was captured as documentation, not as screens.** It
+7. **The database schema is verified behaviourally, not structurally.**
+   `npm run db:verify` applies every migration to a throwaway Postgres and then
+   asserts what a caller can actually *do* — that a user cannot promote
+   themselves to admin, that one user cannot read another's wishlist, that a
+   fabricated discount is rejected. Checking `relrowsecurity` is true would have
+   passed on a schema with no policies at all.
+
+8. **Anti-escalation is a trigger, not a policy.** A policy on `public.profiles`
+   whose expression reads `public.profiles` recurses, and Postgres rejects it at
+   runtime. The trigger refuses any change to `role` from `anon` or
+   `authenticated`, which is both simpler and harder to get wrong.
+
+9. **The build SHA is referenced by its literal name in `env.server.ts`.** Next
+   inlines `process.env.NEXT_PUBLIC_*` textually at build time; a whole-object
+   read of `process.env` is not rewritten. Without this the standalone server
+   reported `sha: "dev"`, and the deploy job's health check — which compares the
+   reported SHA against the commit it just shipped — could never match, so every
+   deploy would have rolled itself back.
+
+10. **The UI/UX concept was captured as documentation, not as screens.** It
    arrived during Phase 0, so `docs/ui-ux-guide.md` and `docs/user-flows.md`
    were written early (PRD §56 puts them at the start of Phase 1). Only the
    primitives the concept contradicted were changed — navigation, a `dark`

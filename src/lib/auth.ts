@@ -6,7 +6,7 @@ import { features } from './env.server';
 import { ApiError } from './http';
 import { logger } from './logger';
 import { createServerSupabase } from './supabase/server';
-import type { UserRole } from './supabase/types';
+import type { UserRole } from './supabase/database.types';
 
 /**
  * Server-side auth guards. The role is read from the database on every check —
@@ -44,8 +44,10 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
  * Role lookup against `profiles`. Fails closed: if the row or the table is
  * missing, or the query errors, the user is not an admin.
  *
- * `profiles` is created by migration 0001 (work item 0.4). Until it exists this
- * correctly returns 'user' for everyone.
+ * Reading `role` from the database on every check is deliberate. The column is
+ * the only source of admin truth, and a JWT claim or header could be shaped by
+ * the client. Migration 0001 backs this with a trigger that stops anon and
+ * authenticated changing the column at all.
  */
 async function readRole(
   supabase: Awaited<ReturnType<typeof createServerSupabase>>,

@@ -3,10 +3,11 @@
 **See it. Style it. Shop it.** — AI fashion discovery, comparison, shopping and
 community.
 
-> **Phase 0 (foundation), partly built.** The scaffold, design system, security
-> baseline, observability and CI are in place. The database and the deploy
-> pipeline are not, and are waiting on decisions listed at the bottom of this
-> file. See `docs/architecture.md` §6 for item-by-item status.
+> **Phase 0 (foundation), substantially built.** Scaffold, design system,
+> security baseline, observability, CI, the database schema and the deploy
+> workflow are all in place. What remains needs credentials and one hosting
+> decision, not code — see [Still blocked](#still-blocked).
+> `docs/architecture.md` §6 has item-by-item status.
 
 ## Setup
 
@@ -35,6 +36,7 @@ the home shell, tokens, primitives, `/api/health` — works.
 | `npm run format` | Prettier, writing changes |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest |
+| `npm run db:verify` | Applies every migration to a throwaway Postgres and asserts the RLS guarantees |
 
 CI runs lint, format check, typecheck, test and build on every pull request. A
 red run blocks the merge.
@@ -71,8 +73,8 @@ Phase 0 cannot finish without these. Nothing here has been guessed at.
 
 | # | Needed | Blocks |
 |---|---|---|
-| 1 | Hostinger plan type — shared hosting cannot run Next.js SSR | The whole deploy half of 0.9 |
-| 2 | Supabase project and keys | 0.4, and proving 0.5 works |
-| 3 | AI provider and embedding model | Fixes `vector(N)` in migration 0001 — changing it later means re-embedding the catalogue |
+| 1 | Hostinger plan type — shared hosting cannot run Next.js SSR | Enabling `deploy.yml`, which is written but dormant |
+| 2 | Supabase project and keys | Applying `0001_core.sql`; proving signup and login work |
+| 3 | AI provider and embedding model | `0002_embeddings.sql` only — `0001` no longer waits on it |
 | 4 | Domain and DNS control | TLS and the Cloudflare layer |
-| 5 | Which affiliate networks are approved today | How long Phase 1 runs on `MOCK DATA` |
+| 5 | Which affiliate networks are approved today | How long Phase 1 runs on seed data |

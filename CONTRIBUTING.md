@@ -36,6 +36,23 @@ npm run build
 
 CI runs exactly this. Running it locally first saves a round trip.
 
+If you touched anything under `supabase/`, also run:
+
+```bash
+npm run db:verify
+```
+
+It applies every migration to a throwaway database and asserts the RLS
+guarantees behaviourally — that a user cannot promote themselves to admin, that
+one user cannot read another's wishlist, and so on. CI runs it too, against a
+`pgvector/pgvector:pg16` service container. It needs a local PostgreSQL 16 with
+`pgvector`:
+
+```bash
+sudo apt-get install -y postgresql postgresql-contrib postgresql-16-pgvector
+sudo pg_ctlcluster 16 main start
+```
+
 ## House rules
 
 These are the ones that get a PR sent back.
@@ -53,8 +70,14 @@ placement. Never a float, never a `₹` in a component (PRD §73).
 `lib/api.ts`, and return `ok()` / `fail()`. No handler formats its own error
 response, and no handler contains SQL.
 
-**Every table has RLS.** Enabled at creation, with explicit policies. Never rely
-on default-deny by accident.
+**Every table has RLS.** Enabled at creation, with explicit policies *and*
+explicit grants — RLS filters rows, grants decide whether the role may touch the
+table at all, and you need both. Add an assertion to
+`supabase/tests/01_rls_assertions.sql` proving the new policy does what you think
+it does. "RLS is enabled" is not a test; "Mallory cannot read Alice's row" is.
+
+**Migrations are never edited after they are applied anywhere.** Write a new
+one. `0001_core.sql` is applied the moment a Supabase project exists.
 
 **Secrets are server-only.** They are read in `lib/env.server.ts` and nowhere
 else. `NEXT_PUBLIC_*` is public — treat it as printed on the home page. The

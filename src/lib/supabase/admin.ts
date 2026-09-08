@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 import { env, features } from '@/lib/env.server';
 
 /**
@@ -18,7 +19,7 @@ export function createAdminSupabase() {
     );
   }
 
-  return createClient(
+  return createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL as string,
     env.SUPABASE_SERVICE_ROLE_KEY as string,
     {

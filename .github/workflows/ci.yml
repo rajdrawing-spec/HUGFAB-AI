@@ -57,3 +57,41 @@ jobs:
         env:
           # Stamped into /api/health so the live commit is knowable without SSH.
           NEXT_PUBLIC_BUILD_SHA: ${{ github.sha }}
+
+  database:
+    name: migrations · RLS policies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # RLS bugs are invisible to lint, typecheck and the unit tests: a policy can
+    # be syntactically perfect and still let one user read another's data. This
+    # job applies every migration to a real Postgres and asserts what a caller
+    # can actually do.
+    services:
+      postgres:
+        # pgvector's image, not plain postgres: 0001 enables the extension.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the psql client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Apply migrations and assert RLS guarantees
+        run: ./scripts/verify-migration.sh
