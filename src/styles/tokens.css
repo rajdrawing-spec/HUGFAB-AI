@@ -1,0 +1,153 @@
+/*
+ * HugFab design tokens — the single source of truth for colour, type, space,
+ * radius and shadow.
+ *
+ * Values come from the HugFab UI/UX Design Guide v1.0. Anything derived rather
+ * than given (hover states, the whole dark palette, borders) is marked, so a
+ * later revision of the guide is easy to reconcile against this file.
+ *
+ * Rules:
+ *   1. Components never hard-code a colour, size or radius. They use the
+ *      Tailwind utilities generated from the `@theme inline` block in globals.css.
+ *   2. Semantic names only. A component asks for `bg-surface`, not `bg-pink-500`,
+ *      so a re-theme happens here and nowhere else.
+ *   3. Every semantic colour is defined in the bare `:root` block first, then
+ *      redefined for dark. Nothing gets its only definition inside a media query.
+ *
+ * Theme resolution: an explicit choice stamps `data-theme` on <html>; with no
+ * stamp we follow the OS via `prefers-color-scheme`.
+ */
+
+:root {
+  /* ---- surfaces & ink ------------------------------- guide: Light/Surface -- */
+  --hf-background: #f8f9fb;
+  --hf-surface: #ffffff;
+  --hf-surface-2: #f1f3f7; /* derived: one step down from Light */
+  --hf-text: #111827; /* guide: Text Primary */
+  --hf-muted: #687280; /* guide: Text Secondary */
+  --hf-border: #e5e8ef; /* derived */
+  --hf-border-strong: #cfd5e1; /* derived */
+  --hf-dark: #0f172a; /* guide: Dark */
+
+  /* ---- brand ------------------------------------------ guide: Brand Colors -- */
+  --hf-primary: #ff3b7a;
+  --hf-primary-hover: #e82d69; /* derived */
+  --hf-primary-foreground: #ffffff;
+  --hf-primary-soft: #ffe8f0; /* derived */
+
+  --hf-secondary: #7c3aed;
+  --hf-secondary-hover: #6d28d9; /* derived */
+  --hf-secondary-foreground: #ffffff;
+  --hf-secondary-soft: #f1e9fe; /* derived */
+
+  --hf-accent: #00c896;
+  --hf-accent-hover: #00b184; /* derived */
+  --hf-accent-foreground: #04372a; /* derived for contrast on accent */
+  --hf-accent-soft: #dcf7ee; /* derived */
+
+  /* ---- status --------------------------------------------------- derived -- */
+  /* Success reuses the brand accent: "In Stock" is green in the guide. */
+  --hf-success: #00a87e;
+  --hf-success-soft: #dcf7ee;
+  --hf-warning: #b45309;
+  --hf-warning-soft: #fdf0dc;
+  --hf-error: #dc2626;
+  --hf-error-soft: #fde8e8;
+
+  /* ---- interaction ---------------------------------------------- derived -- */
+  --hf-ring: #ff3b7a;
+  --hf-overlay: rgb(15 23 42 / 0.45);
+
+  /* ---- elevation ------------------------------------------------ derived -- */
+  --hf-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --hf-shadow-md: 0 1px 3px rgb(15 23 42 / 0.06), 0 8px 24px -14px rgb(15 23 42 / 0.22);
+  --hf-shadow-lg: 0 2px 6px rgb(15 23 42 / 0.07), 0 20px 48px -22px rgb(15 23 42 / 0.3);
+}
+
+/*
+ * Dark theme. The guide is light-only, so this is derived: the guide's Dark
+ * (#0F172A) becomes the ground, and the brand hues are lightened to hold their
+ * contrast against it. Primary stays recognisably HugFab pink.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --hf-background: #0f172a;
+    --hf-surface: #172033;
+    --hf-surface-2: #1e293f;
+    --hf-text: #f8f9fb;
+    --hf-muted: #94a3b8;
+    --hf-border: #263349;
+    --hf-border-strong: #35455f;
+    --hf-dark: #060b16;
+
+    --hf-primary: #ff5c90;
+    --hf-primary-hover: #ff7ba6;
+    --hf-primary-foreground: #2b0413;
+    --hf-primary-soft: #3a1526;
+
+    --hf-secondary: #a78bfa;
+    --hf-secondary-hover: #c4b5fd;
+    --hf-secondary-foreground: #1e1b4b;
+    --hf-secondary-soft: #2c2153;
+
+    --hf-accent: #2ee0ae;
+    --hf-accent-hover: #5aead0;
+    --hf-accent-foreground: #04372a;
+    --hf-accent-soft: #0e3b30;
+
+    --hf-success: #2ee0ae;
+    --hf-success-soft: #0e3b30;
+    --hf-warning: #f0b357;
+    --hf-warning-soft: #3a2a12;
+    --hf-error: #f87171;
+    --hf-error-soft: #3d1a1a;
+
+    --hf-ring: #ff5c90;
+    --hf-overlay: rgb(0 0 0 / 0.62);
+
+    --hf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
+    --hf-shadow-md: 0 1px 3px rgb(0 0 0 / 0.45), 0 8px 24px -14px rgb(0 0 0 / 0.75);
+    --hf-shadow-lg: 0 2px 6px rgb(0 0 0 / 0.5), 0 20px 48px -22px rgb(0 0 0 / 0.85);
+  }
+}
+
+/* An explicit dark choice wins over the OS setting in both directions. */
+:root[data-theme='dark'] {
+  --hf-background: #0f172a;
+  --hf-surface: #172033;
+  --hf-surface-2: #1e293f;
+  --hf-text: #f8f9fb;
+  --hf-muted: #94a3b8;
+  --hf-border: #263349;
+  --hf-border-strong: #35455f;
+  --hf-dark: #060b16;
+
+  --hf-primary: #ff5c90;
+  --hf-primary-hover: #ff7ba6;
+  --hf-primary-foreground: #2b0413;
+  --hf-primary-soft: #3a1526;
+
+  --hf-secondary: #a78bfa;
+  --hf-secondary-hover: #c4b5fd;
+  --hf-secondary-foreground: #1e1b4b;
+  --hf-secondary-soft: #2c2153;
+
+  --hf-accent: #2ee0ae;
+  --hf-accent-hover: #5aead0;
+  --hf-accent-foreground: #04372a;
+  --hf-accent-soft: #0e3b30;
+
+  --hf-success: #2ee0ae;
+  --hf-success-soft: #0e3b30;
+  --hf-warning: #f0b357;
+  --hf-warning-soft: #3a2a12;
+  --hf-error: #f87171;
+  --hf-error-soft: #3d1a1a;
+
+  --hf-ring: #ff5c90;
+  --hf-overlay: rgb(0 0 0 / 0.62);
+
+  --hf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
+  --hf-shadow-md: 0 1px 3px rgb(0 0 0 / 0.45), 0 8px 24px -14px rgb(0 0 0 / 0.75);
+  --hf-shadow-lg: 0 2px 6px rgb(0 0 0 / 0.5), 0 20px 48px -22px rgb(0 0 0 / 0.85);
+}

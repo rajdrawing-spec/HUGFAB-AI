@@ -1,0 +1,59 @@
+name: CI
+
+# The blocking gate (PRD §62). Nothing reaches main, and nothing deploys,
+# without this passing.
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+# A new push supersedes the run it interrupts, except on the protected
+# branches, where every commit keeps its own verdict.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
+
+permissions:
+  contents: read
+
+env:
+  # No secrets are available to this job and none are needed: the build must
+  # succeed from the source alone, or the artefact is not reproducible.
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  verify:
+    name: lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `ci`, not `install`: the lockfile is the source of truth and a drifted
+      # lockfile should fail here rather than be silently rewritten.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Stamped into /api/health so the live commit is knowable without SSH.
+          NEXT_PUBLIC_BUILD_SHA: ${{ github.sha }}
