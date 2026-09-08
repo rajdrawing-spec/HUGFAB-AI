@@ -1,0 +1,98 @@
+# HugFab — Nginx site configuration for the Hostinger VPS.
+#
+# Copy to /etc/nginx/sites-available/hugfab, replace hugfab.com with the real
+# domain, then:
+#   ln -s /etc/nginx/sites-available/hugfab /etc/nginx/sites-enabled/hugfab
+#   nginx -t && systemctl reload nginx
+#
+# TLS lines assume Certbot. If Cloudflare proxies the domain, use a Cloudflare
+# origin certificate instead and set SSL mode to "Full (strict)".
+
+upstream hugfab_app {
+    server 127.0.0.1:3000;
+    keepalive 32;
+}
+
+# Redirect http → https. Certbot's ACME challenge must stay reachable.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name hugfab.com www.hugfab.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name hugfab.com www.hugfab.com;
+
+    ssl_certificate     /etc/letsencrypt/live/hugfab.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/hugfab.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # The application sets CSP, HSTS, X-Frame-Options and the rest in
+    # src/middleware.ts, per request and with a fresh nonce. Adding them here
+    # too would either duplicate or silently override them — so this file sets
+    # none of them.
+
+    # Retailer imagery and product pages are large; the app gzips nothing itself.
+    gzip              on;
+    gzip_types        text/plain text/css application/json application/javascript
+                      application/x-javascript text/xml application/xml image/svg+xml;
+    gzip_min_length   1024;
+    gzip_proxied      any;
+
+    client_max_body_size 10M;   # image uploads are capped at 8M in lib/upload.ts
+
+    # Immutable build assets: hashed filenames, safe to cache forever.
+    location /_next/static/ {
+        alias /var/www/hugfab/current/.next/static/;
+        access_log off;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /_next/image {
+        proxy_pass http://hugfab_app;
+        proxy_cache_valid 200 60m;
+    }
+
+    # Never cached: it reports the live process's state.
+    location = /api/health {
+        proxy_pass http://hugfab_app;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        access_log off;
+    }
+
+    location / {
+        proxy_pass http://hugfab_app;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+        # src/lib/ratelimit.ts identifies callers from these. Without them every
+        # request looks like it came from the proxy and shares one budget.
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_read_timeout    60s;
+        proxy_connect_timeout 10s;
+        proxy_buffering       on;
+    }
+}

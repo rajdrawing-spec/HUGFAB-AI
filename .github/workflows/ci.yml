@@ -1,0 +1,97 @@
+name: CI
+
+# The blocking gate (PRD §62). Nothing reaches main, and nothing deploys,
+# without this passing.
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+# A new push supersedes the run it interrupts, except on the protected
+# branches, where every commit keeps its own verdict.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
+
+permissions:
+  contents: read
+
+env:
+  # No secrets are available to this job and none are needed: the build must
+  # succeed from the source alone, or the artefact is not reproducible.
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  verify:
+    name: lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `ci`, not `install`: the lockfile is the source of truth and a drifted
+      # lockfile should fail here rather than be silently rewritten.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Stamped into /api/health so the live commit is knowable without SSH.
+          NEXT_PUBLIC_BUILD_SHA: ${{ github.sha }}
+
+  database:
+    name: migrations · RLS policies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # RLS bugs are invisible to lint, typecheck and the unit tests: a policy can
+    # be syntactically perfect and still let one user read another's data. This
+    # job applies every migration to a real Postgres and asserts what a caller
+    # can actually do.
+    services:
+      postgres:
+        # pgvector's image, not plain postgres: 0001 enables the extension.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the psql client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Apply migrations and assert RLS guarantees
+        run: ./scripts/verify-migration.sh

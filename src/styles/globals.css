@@ -1,0 +1,179 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/*
+ * `@theme inline` maps the tokens above onto Tailwind's utility namespaces
+ * without copying their values, so `bg-surface` emits
+ * `background-color: var(--hf-surface)` and follows the theme at runtime.
+ */
+@theme inline {
+  /* colour ---------------------------------------------------------------- */
+  --color-background: var(--hf-background);
+  --color-surface: var(--hf-surface);
+  --color-surface-2: var(--hf-surface-2);
+  --color-text: var(--hf-text);
+  --color-muted: var(--hf-muted);
+  --color-border: var(--hf-border);
+  --color-border-strong: var(--hf-border-strong);
+
+  --color-primary: var(--hf-primary);
+  --color-primary-hover: var(--hf-primary-hover);
+  --color-primary-foreground: var(--hf-primary-foreground);
+  --color-primary-soft: var(--hf-primary-soft);
+
+  --color-secondary: var(--hf-secondary);
+  --color-secondary-hover: var(--hf-secondary-hover);
+  --color-secondary-foreground: var(--hf-secondary-foreground);
+  --color-secondary-soft: var(--hf-secondary-soft);
+
+  --color-accent: var(--hf-accent);
+  --color-accent-hover: var(--hf-accent-hover);
+  --color-accent-foreground: var(--hf-accent-foreground);
+  --color-accent-soft: var(--hf-accent-soft);
+
+  --color-dark: var(--hf-dark);
+
+  --color-success: var(--hf-success);
+  --color-success-soft: var(--hf-success-soft);
+  --color-warning: var(--hf-warning);
+  --color-warning-soft: var(--hf-warning-soft);
+  --color-error: var(--hf-error);
+  --color-error-soft: var(--hf-error-soft);
+
+  --color-ring: var(--hf-ring);
+  --color-overlay: var(--hf-overlay);
+
+  /* type scale ------------------------------------------------------------ */
+  /*
+   * Poppins (guide §Typography), self-hosted by next/font in app/layout.tsx.
+   * `--font-poppins` is the variable next/font defines; the fallback stack is
+   * what renders if the face has not loaded yet.
+   */
+  --font-sans:
+    var(--font-poppins), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /*
+   * Guide §Typography: H1 48/Bold, H2 32/SemiBold, H3 24/SemiBold,
+   * Body 16/Regular, Caption 14/Regular.
+   *
+   * Two steps are additions, marked below: `display` for hero type above H1,
+   * and `caption` at 12 for overlines and micro-labels — which pushes the
+   * guide's 14 onto `small`, where the rest of the system already expects it.
+   */
+  --text-display: 3.5rem; /* 56 — addition, hero only */
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 700;
+
+  --text-h1: 3rem; /* 48 */
+  --text-h1--line-height: 1.12;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 2rem; /* 32 */
+  --text-h2--line-height: 1.2;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 1.5rem; /* 24 */
+  --text-h3--line-height: 1.3;
+  --text-h3--letter-spacing: -0.015em;
+  --text-h3--font-weight: 600;
+
+  --text-body: 1rem; /* 16 */
+  --text-body--line-height: 1.6;
+
+  --text-small: 0.875rem; /* 14 — the guide's Caption */
+  --text-small--line-height: 1.5;
+
+  --text-caption: 0.75rem; /* 12 — addition, overlines and micro-labels */
+  --text-caption--line-height: 1.45;
+  --text-caption--letter-spacing: 0.01em;
+
+  --text-button: 0.9375rem; /* 15 */
+  --text-button--line-height: 1.2;
+  --text-button--font-weight: 600;
+
+  /* space, radius, elevation ---------------------------------------------- */
+  --spacing: 0.25rem;
+
+  /* The guide's chrome is soft: pill search and CTAs, 12–16px cards and inputs. */
+  --radius-sm: 0.5rem; /* 8 — chips, tags */
+  --radius-md: 0.75rem; /* 12 — buttons, inputs */
+  --radius-lg: 1rem; /* 16 — cards */
+  --radius-xl: 1.5rem; /* 24 — sheets, hero panels */
+
+  --shadow-sm: var(--hf-shadow-sm);
+  --shadow-md: var(--hf-shadow-md);
+  --shadow-lg: var(--hf-shadow-lg);
+
+  /* motion ---------------------------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Keyboard users get a visible ring; pointer users do not. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background-color: var(--color-primary-soft);
+    color: var(--color-text);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@layer utilities {
+  /* Skip link: off-screen until focused. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+  }
+  .skip-link:focus {
+    left: 0.5rem;
+    top: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
