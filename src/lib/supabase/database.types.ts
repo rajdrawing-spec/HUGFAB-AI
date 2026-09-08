@@ -50,6 +50,7 @@ export interface Database {
           locale?: string;
           currency?: string;
         };
+        Relationships: [];
       };
 
       brands: {
@@ -68,6 +69,7 @@ export interface Database {
           description?: string | null;
         };
         Update: Partial<Database['public']['Tables']['brands']['Insert']>;
+        Relationships: [];
       };
 
       categories: {
@@ -86,6 +88,7 @@ export interface Database {
           position?: number;
         };
         Update: Partial<Database['public']['Tables']['categories']['Insert']>;
+        Relationships: [];
       };
 
       retailers: {
@@ -108,6 +111,7 @@ export interface Database {
           is_active?: boolean;
         };
         Update: Partial<Database['public']['Tables']['retailers']['Insert']>;
+        Relationships: [];
       };
 
       /** Service-role only: RLS is on and no policy grants anon/authenticated access. */
@@ -129,6 +133,7 @@ export interface Database {
           last_synced_at?: string | null;
         };
         Update: Partial<Database['public']['Tables']['affiliate_providers']['Insert']>;
+        Relationships: [];
       };
 
       products: {
@@ -167,6 +172,7 @@ export interface Database {
           is_active?: boolean;
         };
         Update: Partial<Database['public']['Tables']['products']['Insert']>;
+        Relationships: [];
       };
 
       product_variants: {
@@ -191,6 +197,7 @@ export interface Database {
           external_id?: string | null;
         };
         Update: Partial<Database['public']['Tables']['product_variants']['Insert']>;
+        Relationships: [];
       };
 
       prices: {
@@ -222,6 +229,7 @@ export interface Database {
           observed_at?: string;
         };
         Update: Partial<Database['public']['Tables']['prices']['Insert']>;
+        Relationships: [];
       };
 
       /** Append-only. Nothing updates a historical observation. */
@@ -243,7 +251,12 @@ export interface Database {
           currency?: string;
           observed_at?: string;
         };
-        Update: never;
+        // Append-only, but expressed as a normal Update type: `never` here
+        // breaks postgrest-js's table helpers. What actually stops a rewrite is
+        // RLS — price_history has no update policy at all, so the attempt fails
+        // at the database rather than at the compiler.
+        Update: Partial<Database['public']['Tables']['price_history']['Insert']>;
+        Relationships: [];
       };
 
       wishlists: {
@@ -267,6 +280,7 @@ export interface Database {
           note?: string | null;
           notify_below_minor?: number | null;
         };
+        Relationships: [];
       };
 
       affiliate_clicks: {
@@ -291,11 +305,86 @@ export interface Database {
           referrer?: string | null;
           clicked_at?: string;
         };
-        Update: never;
+        // Append-only; enforced by RLS, which grants no update policy. See the
+        // note on price_history above.
+        Update: Partial<Database['public']['Tables']['affiliate_clicks']['Insert']>;
+        Relationships: [];
       };
     };
-    Views: Record<never, never>;
-    Functions: Record<never, never>;
+    Views: {
+      /**
+       * Cheapest in-stock offer per product (migration 0002).
+       * SECURITY INVOKER, so RLS on the underlying tables still applies.
+       */
+      product_best_offer: {
+        Row: {
+          product_id: string;
+          price_id: string;
+          retailer_id: string;
+          variant_id: string | null;
+          price_minor: number;
+          original_minor: number | null;
+          currency: string;
+          availability: Availability;
+          observed_at: string;
+        };
+        Relationships: [];
+      };
+    };
+    Functions: {
+      /**
+       * Keyword + filter + sort + pagination over the catalogue (migration 0002).
+       *
+       * Every argument is required here even though the SQL function defaults
+       * them all. postgrest-js declares `Args` with a `never` default and infers
+       * it from the call site; with optional properties that inference falls
+       * back to `never`, and the call is then typed as taking no arguments at
+       * all. Callers pass every argument explicitly, which is clearer anyway.
+       */
+      search_products: {
+        Args: {
+          search_query: string | null;
+          brand_slugs: string[] | null;
+          category_slug: string | null;
+          gender_filter: Gender | null;
+          retailer_slugs: string[] | null;
+          min_price_minor: number | null;
+          max_price_minor: number | null;
+          in_stock_only: boolean;
+          include_mock: boolean;
+          sort_by: string;
+          page_limit: number;
+          page_offset: number;
+        };
+        Returns: {
+          id: string;
+          slug: string;
+          title: string;
+          description: string | null;
+          gender: Gender;
+          color: string | null;
+          material: string | null;
+          image_urls: string[];
+          is_mock: boolean;
+          created_at: string;
+          brand_id: string | null;
+          brand_slug: string | null;
+          brand_name: string | null;
+          category_id: string | null;
+          category_slug: string | null;
+          category_name: string | null;
+          best_price_minor: number | null;
+          best_original_minor: number | null;
+          best_currency: string | null;
+          best_availability: Availability | null;
+          best_retailer_id: string | null;
+          best_retailer_slug: string | null;
+          best_retailer_name: string | null;
+          offer_count: number;
+          total_count: number;
+        }[];
+      };
+    };
     Enums: {
       user_role: UserRole;
       gender: Gender;

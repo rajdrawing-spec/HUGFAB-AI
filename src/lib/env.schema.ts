@@ -66,6 +66,14 @@ export function serverEnvSchema(nodeEnv: NodeEnv) {
     UPSTASH_REDIS_REST_URL: optional,
     UPSTASH_REDIS_REST_TOKEN: optional,
 
+    /**
+     * Salt for hashing click-out IP addresses. Optional, and its absence is
+     * safe by design: without it no `ip_hash` is stored at all, because an
+     * unsalted hash of an IPv4 address is reversible by brute force and would
+     * be personal data wearing a disguise.
+     */
+    CLICK_IP_SALT: optional,
+
     SENTRY_ENVIRONMENT: z.string().trim().default(nodeEnv),
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 
