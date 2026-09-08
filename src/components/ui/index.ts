@@ -1,4 +1,4 @@
-export { Badge, type BadgeProps, type BadgeTone } from './badge';
+export { Badge, type BadgeProps, type BadgeTone, type BadgeVariant } from './badge';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './button';
 export {
   Card,

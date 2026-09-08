@@ -1,7 +1,11 @@
 # Design system
 
-> Source: **HugFab UI/UX Design Guide v1.0**. Where this document and the guide
-> disagree, the guide wins and this file is wrong — say so in a PR.
+> Source: **HugFab UI/UX Design Guide v1.0** (tokens, type, primitives) and the
+> **UI/UX Concept — Web & Mobile** screen set (how they are used). Where this
+> document and either reference disagree, the reference wins and this file is
+> wrong — say so in a PR.
+>
+> Screens, layouts and patterns live in `docs/ui-ux-guide.md`.
 
 Implemented in `src/styles/tokens.css` (raw values) and `src/styles/globals.css`
 (the Tailwind mapping). Primitives live in `src/components/ui`.
@@ -80,15 +84,15 @@ Spacing is Tailwind's 4px scale. Radius follows the guide's soft chrome:
 
 | Component | Notes |
 |---|---|
-| `Button` | `primary` `secondary` `outline` `text` from the guide; `accent` and `danger` added. `pill`, `loading`, `icon`, `fullWidth`. |
+| `Button` | `primary` `secondary` `outline` `text` from the guide; `dark` for CTAs over photography (the concept's "Search with Photo", "Shop Now"); `accent` and `danger` added. `pill`, `loading`, `icon`, `fullWidth`. |
 | `Input` | Label required (use `hideLabel` for visual-only omission), `hint`/`error` wired to `aria-describedby`, optional leading `icon` and `pill`. |
 | `Card` | `Card` + `CardHeader` / `CardTitle` / `CardDescription` / `CardBody` / `CardFooter`. |
 | `Modal` | Native `<dialog>`: focus trapping, top layer, page inertness and Escape are the browser's job, not ours. |
 | `Sheet` | Same foundation, anchored left / right / bottom. |
 | `Toast` | `ToastProvider` + `useToast()`. Errors announce assertively, everything else politely. |
-| `Badge` | The guide's tags, discount and stock pills. |
+| `Badge` | Three variants covering every small status element in the concept: `solid` (Best Price), `soft` (In Stock), `text` (the green "37% OFF" beside a price). |
 | `Chip` | Filter chip with `aria-pressed` and an optional remove affordance. |
-| `Header` `Footer` `BottomNavigation` | Navigation comes from one `nav-links.ts`, so the desktop and mobile bars cannot drift apart. Unbuilt destinations render as disabled hints rather than dead links. |
+| `Header` `Footer` `BottomNavigation` | Navigation comes from one `nav-links.ts`, so the desktop and mobile bars cannot drift apart. The mobile bar is four destinations around a raised action button, which is modelled separately (`MOBILE_ACTION`) because it is not a destination. Unbuilt routes render as disabled hints rather than dead links. |
 
 ## Accessibility
 

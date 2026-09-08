@@ -3,11 +3,15 @@ import { cn } from '@/lib/cn';
 
 /**
  * Variants follow the guide's button row: Primary (filled pink), Secondary
- * (light fill), Outline, and Text. `accent` and `danger` are additions for
- * confirm/destructive actions the guide does not cover.
+ * (light fill), Outline, and Text.
+ *
+ * `dark` is the concept's other workhorse — "Search with Photo", "Shop Now",
+ * "Shop This Look", "Use Photo". It carries a CTA over photography, where pink
+ * on a busy image loses its contrast. `accent` and `danger` cover confirm and
+ * destructive actions the guide does not illustrate.
  */
 export type ButtonVariant =
-  'primary' | 'secondary' | 'outline' | 'text' | 'accent' | 'danger';
+  'primary' | 'secondary' | 'outline' | 'text' | 'dark' | 'accent' | 'danger';
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -16,6 +20,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary: 'bg-surface-2 text-text hover:bg-border/70',
   outline: 'border border-border-strong bg-surface text-text hover:bg-surface-2',
   text: 'text-primary hover:bg-primary-soft',
+  dark: 'bg-dark text-white hover:opacity-90 shadow-sm',
   accent: 'bg-accent text-accent-foreground hover:bg-accent-hover shadow-sm',
   danger: 'bg-error text-white hover:opacity-90 shadow-sm',
 };

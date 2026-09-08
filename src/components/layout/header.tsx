@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PRIMARY_NAV, type NavLink } from './nav-links';
+import { PRIMARY_NAV, UTILITY_NAV, type NavLink } from './nav-links';
 import { Logo } from './logo';
 import { cn } from '@/lib/cn';
 
@@ -26,7 +26,15 @@ export function Header({ userEmail = null }: HeaderProps) {
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1">
+          <ul className="hidden items-center gap-1 sm:flex">
+            {UTILITY_NAV.map((link) => (
+              <li key={link.href}>
+                <UtilityItem {...link} />
+              </li>
+            ))}
+          </ul>
+
           {userEmail ? (
             <Link
               href="/settings"
@@ -53,6 +61,69 @@ export function Header({ userEmail = null }: HeaderProps) {
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * Wishlist and bag. Icon-only, so each carries an `aria-label`; the icon itself
+ * is decorative.
+ */
+function UtilityItem({ href, label, phase }: NavLink) {
+  const shared = 'inline-flex rounded-md p-2 transition-colors';
+  const icon = label === 'Wishlist' ? <HeartIcon /> : <BagIcon />;
+
+  if (phase) {
+    return (
+      <span
+        aria-disabled="true"
+        title={`${label} arrives in Phase ${phase}`}
+        className={cn(shared, 'text-muted/50 cursor-not-allowed')}
+      >
+        {icon}
+        <span className="sr-only">{label}</span>
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className={cn(shared, 'text-muted hover:bg-surface-2 hover:text-text')}
+    >
+      {icon}
+    </Link>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="M12 20s-7-4.35-7-9a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 4.65-7 9-7 9Z" />
+    </svg>
+  );
+}
+
+function BagIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="M5 8h14l-1 12H6L5 8Z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    </svg>
   );
 }
 

@@ -225,6 +225,13 @@ early rather than late.
 5. **Uploads are validated by magic bytes, not by declared MIME type**, and SVG
    is refused outright as a script-execution vector.
 
-6. **Dark theme is derived.** The design guide is light-only; the dark palette
-   was extrapolated from it and is marked as derived in `tokens.css`. It needs a
+6. **Dark theme is derived.** Both design references are light-only; the dark
+   palette was extrapolated and is marked as derived in `tokens.css`. It needs a
    designer's eye before Phase 1 ships.
+
+7. **The UI/UX concept was captured as documentation, not as screens.** It
+   arrived during Phase 0, so `docs/ui-ux-guide.md` and `docs/user-flows.md`
+   were written early (PRD §56 puts them at the start of Phase 1). Only the
+   primitives the concept contradicted were changed — navigation, a `dark`
+   button variant, `Badge` variants, the mobile bar's centre action. No Phase 1
+   screen was built ahead of its phase.

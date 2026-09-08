@@ -92,11 +92,17 @@ export default function HomePage() {
               <span className="text-body text-muted line-through">
                 {formatMoney(listPrice)}
               </span>
-              {saving !== null && <Badge tone="primary">{saving}% OFF</Badge>}
+              {saving !== null && (
+                <Badge tone="success" variant="text">
+                  {saving}% OFF
+                </Badge>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge tone="accent">In stock</Badge>
-              <Badge tone="secondary">Best price</Badge>
+              <Badge tone="success">In stock</Badge>
+              <Badge tone="primary" variant="solid">
+                Best price
+              </Badge>
               <Badge>MOCK DATA</Badge>
             </div>
             <p className="text-caption text-muted">
