@@ -5,6 +5,106 @@
 > `.github/workflows/deploy.yml` exists but is gated on the repository variable
 > `DEPLOY_ENABLED`, so merging it changes nothing. It stays dormant until the
 > hosting decision is made and the secrets below are set.
+>
+> **There has never been a deployment of this repository.** The first commit was
+> a README and a `.gitignore`; no startup file, `.htaccess` or host
+> configuration has ever been committed. Anything describing a "previous
+> working structure" is describing something outside this repository.
+
+## The entry point
+
+One file, one start path, everywhere:
+
+```
+index.js        →  the production server. Used by npm start, by PM2, and as a
+                   Passenger-style host's Application Startup File.
+```
+
+`npm start` is `node index.js`. `ecosystem.config.cjs` runs `index.js`. A host
+configured with an Application Root and a Startup File points at `index.js`.
+There is deliberately no second way to start the application.
+
+Everything in it is anchored to `__dirname`, never `process.cwd()`. A host may
+launch the process from any directory; anchoring to the app root is what stops
+Next reporting "no production build found" on a build that is present.
+
+It also handles two things the generic servers get wrong on shared hosting:
+
+- **`PORT` may be a Unix socket path**, not a number. `server.listen('3000')`
+  treats a numeric *string* as a pipe name and never binds the port, so the two
+  cases are distinguished explicitly.
+- **`HOSTNAME` is often the machine's name** ("srv1234"), which is not a
+  bindable address. Binding it fails with `EADDRNOTAVAIL` and the app never
+  starts. Only an address that can actually be bound is honoured; anything else
+  falls back to `0.0.0.0` with a warning.
+
+## Why `output: 'standalone'` is not used
+
+It was set, and it was wrong for this host. Three reasons, each verified:
+
+1. Next refuses to run the normal production server when it is set — *"next
+   start does not work with output: standalone"* — so `npm start` and any root
+   startup file stop working. A host that starts one entry file has nothing
+   valid to point at.
+2. The bundle it emits is **incomplete**. `.next/static` and `public/` are left
+   out and must be copied in by a separate step. Point a Startup File at
+   `.next/standalone/server.js` without that copy and the site serves HTML
+   while every stylesheet and script 404s — a failure that looks like a CSS bug.
+3. It bakes **absolute build-machine paths** into the runtime config blob
+   (`loaderFile`, `outputFileTracingRoot`, `turbopack.root`), so the artefact
+   carries the layout of whatever machine built it.
+
+Standalone earns its keep in a container, where the image is the unit of
+deployment. Here the host installs dependencies at the application root and runs
+one entry file.
+
+## Hostinger — Node.js application (hPanel)
+
+For the Passenger-based Node.js app manager, which is what "Application Root"
+and "Application Startup File" mean.
+
+| Setting | Value |
+|---|---|
+| Application Root | the directory holding `package.json` and `index.js` |
+| Application Startup File | `index.js` |
+| Node version | 22 (20.11+ works; CI runs 22) |
+| Build command | `npm ci && npm run build` — run in the Application Root |
+| Start command | none needed; the host runs the Startup File |
+
+`.next` is git-ignored, so a checkout alone never contains a build. The build
+must run on the host after install, or be uploaded alongside the source.
+
+### The one trap that silently breaks authentication
+
+`NEXT_PUBLIC_*` variables are **inlined into the browser bundle when
+`npm run build` runs**. Setting them afterwards does not reach the browser: the
+server picks them up, the client does not, and login fails with no obvious
+cause.
+
+Verified: an app built without them and given them at runtime reports
+`database: ok` from `/api/health` while the runtime value appears nowhere in
+`.next/static`.
+
+**Set every `NEXT_PUBLIC_*` variable before building.** Changing one later means
+rebuilding, not restarting.
+
+### Environment variables
+
+Either the host's environment-variable UI or a `.env.production` file in the
+Application Root — Next loads it automatically at startup (verified). If you use
+a file, it must be `chmod 600`: it holds the service-role key.
+
+Required in production, or the process refuses to start:
+
+```
+NEXT_PUBLIC_SITE_URL
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+That refusal is deliberate. `assertServerEnvironment()` prints the missing keys
+and exits 1 rather than serving a half-working site.
 
 ## CI — built and enforcing
 
@@ -71,12 +171,14 @@ rather than a rebuild.
 1. Resolves the commit — the CI run's `head_sha`, or the `ref` input on a manual
    dispatch.
 2. Builds it with `NEXT_PUBLIC_BUILD_SHA` set to that commit.
-3. Assembles the release: `.next/standalone`, plus `.next/static` and `public/`,
-   which `output: 'standalone'` deliberately leaves out, plus
-   `ecosystem.config.cjs`.
+3. Assembles the release: the `.next` build, `public/`, `index.js`,
+   `package.json`, `package-lock.json`, `next.config.ts` and
+   `ecosystem.config.cjs`. No standalone bundle and no asset-copying step that
+   can be forgotten.
 4. rsyncs into a new timestamped release directory.
-5. Symlinks `shared/.env.production` into the release — secrets live only on the
-   server, never in a build artefact.
+5. Runs `npm ci --omit=dev` on the host, so nothing native is carried across
+   from the runner, then symlinks `shared/.env.production` into the release —
+   secrets live only on the server, never in a build artefact.
 6. Records the outgoing release, then `ln -sfn` the new one. That is atomic.
 7. `pm2 reload` — zero downtime.
 8. **Polls `/api/health` until it reports both `status: ok` and the SHA just

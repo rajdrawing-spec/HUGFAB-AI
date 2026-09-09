@@ -86,13 +86,15 @@ jobs:
       - name: Assemble the release bundle
         run: |
           set -euo pipefail
-          # `output: 'standalone'` emits a self-contained server but deliberately
-          # leaves out the static assets and public/ — they are copied in here.
+          # The application runs the ordinary Next server from its root via
+          # index.js, so the release is the built app itself: no standalone
+          # bundle and no asset-copying step that can be forgotten.
+          # Dependencies are installed on the server, not shipped, so the
+          # artefact carries no build-machine paths.
           mkdir -p release
-          cp -r .next/standalone/. release/
-          mkdir -p release/.next
-          cp -r .next/static release/.next/static
+          cp -r .next release/.next
           [ -d public ] && cp -r public release/public || true
+          cp index.js package.json package-lock.json next.config.ts release/
           cp ecosystem.config.cjs release/
           echo "${{ steps.target.outputs.sha }}" > release/RELEASE_SHA
           du -sh release
@@ -145,6 +147,11 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -euo pipefail <<REMOTE
+            # Production dependencies, installed from the lockfile on the host
+            # so nothing native is carried across from the runner.
+            cd "$RELEASE_DIR"
+            npm ci --omit=dev --no-audit --no-fund
+
             # Secrets live only on the server, never in the build artefact.
             ln -sfn "$DEPLOY_PATH/shared/.env.production" "$RELEASE_DIR/.env.production"
 

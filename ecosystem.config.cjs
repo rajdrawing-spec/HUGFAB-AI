@@ -10,8 +10,9 @@ module.exports = {
   apps: [
     {
       name: 'hugfab',
-      // Next's standalone output puts its server entrypoint at the release root.
-      script: 'server.js',
+      // The same entry file the application uses everywhere else. One start
+      // path, so PM2 and a Passenger-style host cannot diverge.
+      script: 'index.js',
       cwd: '/var/www/hugfab/current',
 
       /**
