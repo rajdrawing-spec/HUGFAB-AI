@@ -311,3 +311,177 @@ begin
   raise notice 'PASS  updated_at is maintained by trigger';
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- 0002: the best-offer view and the search function must not become an RLS
+-- bypass. A view in PostgreSQL 15+ runs with its owner's rights by default,
+-- which would let anon read through it what the policy on the base table
+-- refuses. These assertions fail loudly if security_invoker is ever dropped.
+-- ---------------------------------------------------------------------------
+
+-- Give the inactive product an offer, so "can anon see it through the view?"
+-- is a question with a real answer rather than an empty set either way.
+insert into public.prices (product_id, retailer_id, price_minor, currency, availability)
+values ('66666666-6666-6666-6666-666666666666',
+        '44444444-4444-4444-4444-444444444444', 500000, 'INR', 'in_stock');
+
+insert into public.prices (product_id, retailer_id, price_minor, original_minor, currency, availability)
+values ('55555555-5555-5555-5555-555555555555',
+        '44444444-4444-4444-4444-444444444444', 249900, 299900, 'INR', 'in_stock');
+
+do $$
+declare invoker boolean;
+begin
+  select c.reloptions @> array['security_invoker=true']
+    into invoker
+  from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public' and c.relname = 'product_best_offer';
+
+  if not coalesce(invoker, false) then
+    raise exception 'product_best_offer is not SECURITY INVOKER — it would bypass RLS';
+  end if;
+  raise notice 'PASS  product_best_offer is SECURITY INVOKER';
+end;
+$$;
+
+set role anon;
+
+-- An inactive product must be invisible through every route to it, not just
+-- through `products`. This caught a real leak: 0001 made the child tables
+-- `using (true)`, so a withdrawn product's offers stayed publicly enumerable.
+do $$
+declare leaked integer;
+begin
+  select count(*) into leaked from public.prices
+   where product_id = '66666666-6666-6666-6666-666666666666';
+  if leaked <> 0 then
+    raise exception 'prices leaked % offers for an inactive product', leaked;
+  end if;
+  raise notice 'PASS  prices for an inactive product are not readable by anon';
+end;
+$$;
+
+do $$
+declare leaked integer;
+begin
+  select count(*) into leaked
+    from public.product_best_offer
+   where product_id = '66666666-6666-6666-6666-666666666666';
+  if leaked <> 0 then
+    raise exception 'the best-offer view leaked an inactive product to anon';
+  end if;
+  raise notice 'PASS  the best-offer view does not leak inactive products to anon';
+end;
+$$;
+
+do $$
+declare leaked integer;
+begin
+  select count(*) into leaked
+    from public.search_products(include_mock => true)
+   where slug = 'test-inactive-product';
+  if leaked <> 0 then
+    raise exception 'search_products leaked an inactive product to anon';
+  end if;
+  raise notice 'PASS  search_products does not leak inactive products to anon';
+end;
+$$;
+
+-- Mock rows are excluded unless explicitly requested: production must never
+-- serve invented prices as real ones (PRD §60, §69).
+do $$
+declare with_mock integer; without_mock integer;
+begin
+  select count(*) into with_mock    from public.search_products(include_mock => true);
+  select count(*) into without_mock from public.search_products(include_mock => false);
+  if without_mock >= with_mock then
+    raise exception 'include_mock => false did not exclude the seeded mock rows (% vs %)',
+      without_mock, with_mock;
+  end if;
+  raise notice 'PASS  search excludes mock rows unless they are asked for';
+end;
+$$;
+
+-- Keyword search, filters and sort actually do something.
+do $$
+declare n integer;
+begin
+  select count(*) into n from public.search_products(search_query => 'hoodie', include_mock => true);
+  if n < 1 then
+    raise exception 'keyword search matched nothing';
+  end if;
+  raise notice 'PASS  keyword search returns matches';
+end;
+$$;
+
+do $$
+declare cheapest bigint; dearest bigint;
+begin
+  select best_price_minor into cheapest
+    from public.search_products(sort_by => 'price_asc', include_mock => true)
+   where best_price_minor is not null limit 1;
+  select best_price_minor into dearest
+    from public.search_products(sort_by => 'price_desc', include_mock => true)
+   where best_price_minor is not null limit 1;
+  if cheapest is null or dearest is null or cheapest > dearest then
+    raise exception 'price sort is wrong: asc gave %, desc gave %', cheapest, dearest;
+  end if;
+  raise notice 'PASS  price sort orders both ways';
+end;
+$$;
+
+do $$
+declare n integer; over_budget integer;
+begin
+  select count(*) into n
+    from public.search_products(max_price_minor => 180000, include_mock => true);
+  select count(*) into over_budget
+    from public.search_products(max_price_minor => 180000, include_mock => true)
+   where best_price_minor > 180000;
+  if over_budget <> 0 then
+    raise exception 'a max price filter returned % rows over budget', over_budget;
+  end if;
+  if n = 0 then
+    raise exception 'the max price filter excluded everything';
+  end if;
+  raise notice 'PASS  a max-price filter returns nothing over budget';
+end;
+$$;
+
+-- A parent category must include its children: filtering "Topwear" has to
+-- return the hoodies underneath it.
+do $$
+declare parent_hits integer; child_hits integer;
+begin
+  select count(*) into parent_hits
+    from public.search_products(category_slug => 'topwear', include_mock => true);
+  select count(*) into child_hits
+    from public.search_products(category_slug => 'hoodies', include_mock => true);
+  if parent_hits < child_hits or child_hits = 0 then
+    raise exception 'category filter is not walking the tree (parent %, child %)',
+      parent_hits, child_hits;
+  end if;
+  raise notice 'PASS  a category filter includes descendant categories';
+end;
+$$;
+
+-- total_count describes the whole result set, not the page.
+do $$
+declare page_rows integer; reported bigint; everything integer;
+begin
+  select count(*), max(total_count) into page_rows, reported
+    from public.search_products(include_mock => true, page_limit => 1);
+  select count(*) into everything from public.search_products(include_mock => true);
+  if page_rows <> 1 then
+    raise exception 'page_limit => 1 returned % rows', page_rows;
+  end if;
+  if reported <> everything then
+    raise exception 'total_count (%) disagrees with the full result set (%)',
+      reported, everything;
+  end if;
+  raise notice 'PASS  total_count describes the result set, not the page';
+end;
+$$;
+
+reset role;

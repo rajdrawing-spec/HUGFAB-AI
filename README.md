@@ -58,14 +58,15 @@ behind Nginx — nothing depends on Vercel-only behaviour.
 | [`docs/design-system.md`](docs/design-system.md) | Tokens, type scale, primitives, accessibility rules |
 | [`docs/ui-ux-guide.md`](docs/ui-ux-guide.md) | Screen inventory, recurring patterns, Phase 1 component build order |
 | [`docs/user-flows.md`](docs/user-flows.md) | The six flows, their rules and their failure paths |
+| [`docs/api.md`](docs/api.md) | Endpoints, the response envelope, rate limits, money format |
 | [`docs/database.md`](docs/database.md) | Intended schema and the RLS rules it must satisfy |
 | [`docs/deployment.md`](docs/deployment.md) | CI, and the deploy runbook awaiting the hosting decision |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branches, house rules, what gets a PR sent back |
 
 `docs/ui-ux-guide.md` and `docs/user-flows.md` are normally written at the start
 of Phase 1 (PRD §56); they are here early because the UI/UX concept arrived
-during Phase 0. `docs/api.md` and `docs/affiliate-integrations.md` arrive with
-Phase 1; `docs/ai.md` with Phase 2 (PRD §64).
+during Phase 0. `docs/affiliate-integrations.md` lands with the first approved
+network; `docs/ai.md` with Phase 2 (PRD §64).
 
 ## Still blocked
 

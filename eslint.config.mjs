@@ -67,6 +67,21 @@ const config = [
       ],
     },
   },
+  /**
+   * The production startup file is CommonJS by necessity: package.json declares
+   * no "type", and Passenger-style hosts load the startup file with require().
+   * It is a Node entry point, not application code.
+   */
+  {
+    files: ['index.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { __dirname: 'readonly', process: 'readonly', console: 'readonly' },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
   prettier,
 ];
 

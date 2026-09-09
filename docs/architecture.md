@@ -254,3 +254,60 @@ early rather than late.
    primitives the concept contradicted were changed — navigation, a `dark`
    button variant, `Badge` variants, the mobile bar's centre action. No Phase 1
    screen was built ahead of its phase.
+
+---
+
+## 7. Phase 1 contracts (2026-09-08)
+
+The parts of Phase 1 that needed none of the outstanding decisions. No screens:
+the UI waits on the empty, loading and error states that neither design
+reference settles (`docs/ui-ux-guide.md` §8).
+
+| Built | Where |
+|---|---|
+| Catalogue domain types — `HugFabProduct`, `ProductOffer`, `ProductSummary`, `ProductDetail` | `src/modules/products/types.ts` |
+| Input and row schemas | `src/modules/products/schema.ts` |
+| Row → domain mapping, including offer ordering and discount derivation | `src/modules/products/mapper.ts` |
+| Repository and service | `src/modules/products/` |
+| `AffiliateProvider` interface and the `NormalisedProduct` boundary | `src/modules/affiliate/types.ts` |
+| Click-out attribution | `src/modules/affiliate/` |
+| `GET /api/products`, `/api/products/:slug`, `/api/search`, `/api/affiliate/click` | `src/app/api/` |
+| Best-offer view and `search_products` function | `supabase/migrations/0002_catalogue_queries.sql` |
+
+### 7.1 Decisions
+
+11. **A read leak in 0001 was found by writing the test first.** 0001 made
+    `prices`, `price_history` and `product_variants` readable with
+    `using (true)`, on the reasoning that the catalogue is public. It is not
+    quite: `products` has always hidden inactive rows from `anon`, and the child
+    tables did not — so the offers, price history and variants of a withdrawn
+    product stayed publicly enumerable. 0002 tightens all three. The condition
+    belongs on the child tables, not on each consumer, so the fix covers the
+    view, the function, PostgREST and anything Phase 1 adds later.
+
+12. **The best-offer view is `SECURITY INVOKER`, and that is asserted.** A view
+    in PostgreSQL 15+ runs with its *owner's* rights by default, which would
+    have handed `anon` exactly the rows the policy refuses. The assertion checks
+    the behaviour, not the flag.
+
+13. **The client never sees a retailer's link.** `ProductOffer` carries
+    `clickPath` — our own route — so attribution cannot be bypassed and a dead
+    offer is caught before the user leaves. A test asserts no `http` appears in
+    a serialised summary.
+
+14. **Offer order is the render order.** In-stock first, then cheapest, computed
+    once in the mapper. The comparison table renders that order directly, so
+    "Best Price" and the top row agree by construction rather than by a second
+    calculation that could disagree with it.
+
+15. **`include_mock` is not a request parameter.** The repository decides it
+    from `NODE_ENV`. A client must never be able to ask for invented prices
+    (PRD §60, §69).
+
+16. **Supabase's query-type inference is not depended on.** `rpc` and the click
+    insert are narrowed explicitly, and rows are parsed with Zod. The
+    `Database` types are hand-written until a project exists to generate them
+    from, and inference against them proved fragile; a Zod parse at the boundary
+    is a stronger guarantee than an inferred type and survives the switch to
+    generated types. `@supabase/ssr` was also upgraded 0.6 → 0.12 to match
+    `supabase-js` 2.116.

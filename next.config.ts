@@ -2,11 +2,28 @@ import type { NextConfig } from 'next';
 
 /**
  * Nothing here may depend on Vercel-only behaviour (PRD §36).
- * `standalone` produces a self-contained server bundle that PM2 runs on the
- * Hostinger VPS; the custom image loader keeps us off Vercel's image pipeline.
+ *
+ * `output: 'standalone'` is deliberately NOT set. It was, and it was wrong for
+ * how this application is actually hosted:
+ *
+ *   1. Next refuses to run the normal production server when it is set —
+ *      "next start does not work with output: standalone" — so `npm start` and
+ *      any root startup file stop working. A host configured with an
+ *      Application Root and a Startup File has nothing valid to point at.
+ *   2. The bundle it emits is incomplete. `.next/static` and `public/` are left
+ *      out and must be copied in by a separate step. Miss it and the site
+ *      returns HTML while every stylesheet and script 404s — a failure that
+ *      looks like a CSS bug rather than a deployment one.
+ *   3. It bakes absolute build-machine paths into the runtime config blob
+ *      (`loaderFile`, `outputFileTracingRoot`, `turbopack.root`), so the
+ *      artefact carries the layout of whatever machine built it.
+ *
+ * Standalone earns its keep in a container, where the image is the unit of
+ * deployment. Here the host installs dependencies at the application root and
+ * runs one entry file, so the ordinary server is both simpler and correct.
+ * See index.js and docs/deployment.md.
  */
 const nextConfig: NextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
 
