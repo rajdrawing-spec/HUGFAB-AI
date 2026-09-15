@@ -247,8 +247,15 @@ the `ref` input.
 ## Operational checks
 
 - `GET /api/health` → `{ status, sha, environment, uptimeSeconds, dependencies }`.
-  Returns 503 when the database is unreachable, so it is safe as an Nginx or
-  uptime-monitor probe. Nginx is configured not to cache it.
+  Returns 503 only when the database is unreachable, so it is safe as an Nginx
+  or uptime-monitor probe. `dependencies.database` also distinguishes
+  `schema-missing` (migrations not applied — reported at 200) from
+  `not-configured` (no credentials). Nginx is configured not to cache it.
+- `sha` resolves from `NEXT_PUBLIC_BUILD_SHA`, then `GITHUB_SHA`, then
+  `git rev-parse HEAD`, then `"unknown"`. A host that builds from its own
+  checkout — Hostinger's Node.js pipeline does — gets the right commit with no
+  configuration. `"unknown"` means the build had neither an environment variable
+  nor a git directory, which is worth knowing rather than papering over.
 - `pm2 logs hugfab` — structured JSON, one object per line in production.
 - `pm2 describe hugfab` — restart count. Repeated restarts mean a broken
   release, not flakiness; `max_restarts: 4` stops it thrashing.

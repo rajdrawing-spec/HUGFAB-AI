@@ -138,8 +138,32 @@ URL.
 
 ## `GET /api/health`
 
-Liveness and readiness. Returns the build SHA, so the live commit is knowable
-without SSH. 503 when the database is unreachable. Never cached.
+Liveness and readiness. Never cached.
+
+```jsonc
+{ "data": {
+  "status": "ok",            // "degraded" only when the database is unreachable
+  "sha": "58cb9b4…",         // the commit this build came from, or "unknown"
+  "environment": "production",
+  "uptimeSeconds": 297,
+  "dependencies": {
+    "database": "ok",        // ok | degraded | schema-missing | not-configured
+    "rateLimiter": "ok"      // ok | not-configured
+  }
+} }
+```
+
+`database` is settled by a real query against `brands` — credentials, network
+and schema in one round trip. It is emphatically not `auth.getSession()`, which
+an earlier version used and which returns a null session in about two
+milliseconds without touching the network, reporting `ok` for any deployment
+whose environment variables happened to be non-empty.
+
+`schema-missing` is its own state, and returns **200**. "Postgres is
+unreachable" and "the migrations have not run" are different problems with
+different fixes, and only the first is an emergency; 503-ing the marketing shell
+because a migration is outstanding tells a monitor nothing useful. Only
+`degraded` returns 503.
 
 ---
 

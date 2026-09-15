@@ -1,4 +1,41 @@
+import { execFileSync } from 'node:child_process';
 import type { NextConfig } from 'next';
+
+/**
+ * The commit this build came from, for /api/health.
+ *
+ * Tried in order, because different hosts supply it differently and some supply
+ * nothing at all:
+ *
+ *   1. NEXT_PUBLIC_BUILD_SHA — set explicitly, e.g. by the deploy workflow when
+ *      it builds a specific ref.
+ *   2. GITHUB_SHA / VERCEL_GIT_COMMIT_SHA — set by the CI that is running.
+ *   3. `git rev-parse HEAD` — for a host that builds from a checkout of its own,
+ *      which is how Hostinger's Node.js pipeline works.
+ *   4. 'unknown' — honest. The previous default was 'dev', which reads like a
+ *      development build rather than "nobody told me", and made a production
+ *      deployment indistinguishable from a local one.
+ */
+function resolveBuildSha(): string {
+  const fromEnv =
+    process.env.NEXT_PUBLIC_BUILD_SHA ??
+    process.env.GITHUB_SHA ??
+    process.env.VERCEL_GIT_COMMIT_SHA;
+  if (fromEnv) return fromEnv;
+
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+      timeout: 5000,
+    }).trim();
+  } catch {
+    // No git, no .git directory, or a shallow export. Not an error.
+    return 'unknown';
+  }
+}
+
+const BUILD_SHA = resolveBuildSha();
 
 /**
  * Nothing here may depend on Vercel-only behaviour (PRD §36).
@@ -58,8 +95,7 @@ const nextConfig: NextConfig = {
      * than the commit being deployed. Reading it first would make the health
      * check reject a good rollback and roll it straight back again.
      */
-    NEXT_PUBLIC_BUILD_SHA:
-      process.env.NEXT_PUBLIC_BUILD_SHA ?? process.env.GITHUB_SHA ?? 'dev',
+    NEXT_PUBLIC_BUILD_SHA: BUILD_SHA,
   },
 };
 
