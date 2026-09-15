@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 
 import { env } from '@/lib/env.server';
 import { logger } from '@/lib/logger';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { z } from 'zod';
 
@@ -33,21 +34,34 @@ export interface OfferDestination {
 /**
  * The link for one product at one retailer, or null when there isn't one.
  *
- * Reads through the request-scoped client, so RLS decides visibility: a
- * withdrawn product's offers are unreachable here for the same reason they are
- * unreachable everywhere else.
+ * **Reads with the service-role client, and therefore checks visibility
+ * itself.** Migration 0003 revoked `prices.affiliate_url` from anon and
+ * authenticated: the column carries our tracking identifiers, and anyone who
+ * opened the site held the anon key and could have read every one of them
+ * straight out of PostgREST.
+ *
+ * Losing RLS means losing the filter that came with it, so the product's
+ * visibility is re-established here in the same query — an inactive or mock
+ * product must be as unreachable through this path as through any other. The
+ * assertion "prices for an inactive product are not readable by anon" covers
+ * the public path; this join is what covers the privileged one.
+ *
+ * Nothing about the URL reaches the browser either way: the route returns a
+ * redirect, not a payload.
  */
 export async function findOfferDestination(
   productId: string,
   retailerId: string,
 ): Promise<OfferDestination | null> {
-  const supabase = await createServerSupabase();
+  const supabase = createAdminSupabase();
 
   const { data, error } = await supabase
     .from('prices')
-    .select('affiliate_url, product_url')
+    .select('affiliate_url, product_url, products!inner(is_active, is_mock)')
     .eq('product_id', productId)
     .eq('retailer_id', retailerId)
+    .eq('products.is_active', true)
+    .eq('products.is_mock', false)
     .order('observed_at', { ascending: false })
     .limit(1)
     .maybeSingle();

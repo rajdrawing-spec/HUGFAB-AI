@@ -17,11 +17,7 @@ import type { MatchCandidate } from './identity';
  */
 
 export type Availability =
-  | 'in_stock'
-  | 'out_of_stock'
-  | 'preorder'
-  | 'discontinued'
-  | 'unknown';
+  'in_stock' | 'out_of_stock' | 'preorder' | 'discontinued' | 'unknown';
 
 export type Gender = 'women' | 'men' | 'unisex' | 'kids';
 
@@ -119,10 +115,7 @@ export interface IngestionStore {
   ensureRetailer(slug: string): Promise<string>;
 
   /** The idempotency lookup: has this provider's item been seen before? */
-  findProductBySourceItem(
-    providerId: string,
-    externalId: string,
-  ): Promise<string | null>;
+  findProductBySourceItem(providerId: string, externalId: string): Promise<string | null>;
 
   findMatches(query: MatchQuery): Promise<MatchCandidate[]>;
 

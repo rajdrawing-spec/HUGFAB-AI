@@ -1,5 +1,6 @@
 /**
- * Database types for the schema created by `supabase/migrations/0001_core.sql`.
+ * Database types for the schema created by the migrations in
+ * `supabase/migrations/` (0001 core, 0002 catalogue queries, 0003 identity).
  *
  * Hand-written to match that migration, because generating them needs a running
  * project. Once one exists, replace this file wholesale:
@@ -14,6 +15,14 @@ export type UserRole = 'user' | 'admin';
 export type Gender = 'women' | 'men' | 'unisex' | 'kids';
 export type Availability =
   'in_stock' | 'out_of_stock' | 'preorder' | 'discontinued' | 'unknown';
+
+/** Migration 0003. */
+export type IdentifierType =
+  'gtin' | 'ean' | 'upc' | 'isbn' | 'asin' | 'mpn' | 'sku' | 'style_code';
+export type MatchMethod = 'identifier' | 'attribute' | 'fuzzy' | 'manual';
+export type MatchDecision = 'pending' | 'merged' | 'rejected' | 'expired';
+export type IngestionStatus =
+  'running' | 'succeeded' | 'partial' | 'failed' | 'cancelled';
 
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
@@ -211,9 +220,24 @@ export interface Database {
           original_minor: number | null;
           currency: string;
           availability: Availability;
+          /**
+           * NOT granted to anon or authenticated (0003). Selecting it with the
+           * request-scoped client is a permission error, by design — it carries
+           * our tracking identifiers. Read it with the service-role client only.
+           */
           affiliate_url: string | null;
           product_url: string | null;
           observed_at: string;
+          // --- 0003 ---
+          affiliate_provider_id: string | null;
+          external_offer_id: string | null;
+          previous_price_minor: number | null;
+          price_changed_at: string | null;
+          previous_availability: Availability | null;
+          first_seen_at: string;
+          last_seen_at: string;
+          /** Generated from original_minor and price_minor. Never written. */
+          discount_pct: number | null;
         };
         Insert: Partial<Timestamps> & {
           id?: string;
@@ -227,6 +251,8 @@ export interface Database {
           affiliate_url?: string | null;
           product_url?: string | null;
           observed_at?: string;
+          affiliate_provider_id?: string | null;
+          external_offer_id?: string | null;
         };
         Update: Partial<Database['public']['Tables']['prices']['Insert']>;
         Relationships: [];
@@ -310,6 +336,177 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['affiliate_clicks']['Insert']>;
         Relationships: [];
       };
+
+      /** Migration 0003. Service-role only: RLS is on with no public policy. */
+      product_source_links: {
+        Row: {
+          id: string;
+          product_id: string;
+          provider_id: string;
+          external_id: string;
+          retailer_id: string | null;
+          source_url: string | null;
+          first_seen_at: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          provider_id: string;
+          external_id: string;
+          retailer_id?: string | null;
+          source_url?: string | null;
+          first_seen_at?: string;
+          last_seen_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['product_source_links']['Insert']>;
+        Relationships: [];
+      };
+
+      /**
+       * Migration 0003. Readable by anon for visible products — a GTIN is
+       * printed on the box.
+       *
+       * `normalised_value` and `is_strong` are set by trigger from
+       * `raw_value`; writing them has no effect. An identifier that does not
+       * normalise (a barcode with a bad check digit) raises on insert.
+       */
+      product_identifiers: {
+        Row: Timestamps & {
+          id: string;
+          product_id: string;
+          id_type: IdentifierType;
+          raw_value: string;
+          normalised_value: string;
+          is_strong: boolean;
+          provider_id: string | null;
+        };
+        Insert: Partial<Timestamps> & {
+          id?: string;
+          product_id: string;
+          id_type: IdentifierType;
+          raw_value: string;
+          provider_id?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['product_identifiers']['Insert']>;
+        Relationships: [];
+      };
+
+      /** Migration 0003. Service-role only. */
+      product_match_candidates: {
+        Row: Timestamps & {
+          id: string;
+          product_id: string;
+          candidate_product_id: string;
+          method: MatchMethod;
+          confidence: number;
+          signals: Json;
+          decision: MatchDecision;
+          decided_by: string | null;
+          decided_at: string | null;
+          note: string | null;
+          run_id: string | null;
+        };
+        Insert: Partial<Timestamps> & {
+          id?: string;
+          /** Must sort before candidate_product_id; a check constraint enforces it. */
+          product_id: string;
+          candidate_product_id: string;
+          method: MatchMethod;
+          confidence: number;
+          signals?: Json;
+          decision?: MatchDecision;
+          decided_by?: string | null;
+          decided_at?: string | null;
+          note?: string | null;
+          run_id?: string | null;
+        };
+        Update: Partial<
+          Database['public']['Tables']['product_match_candidates']['Insert']
+        >;
+        Relationships: [];
+      };
+
+      /** Migration 0003. Service-role only. */
+      ingestion_runs: {
+        Row: Timestamps & {
+          id: string;
+          provider_id: string;
+          status: IngestionStatus;
+          started_at: string;
+          finished_at: string | null;
+          records_received: number;
+          records_created: number;
+          records_updated: number;
+          records_rejected: number;
+          records_skipped: number;
+          offers_created: number;
+          offers_updated: number;
+          price_changes: number;
+          matches_queued: number;
+          error_message: string | null;
+          error_details: Json | null;
+          cursor_state: Json | null;
+          options: Json;
+        };
+        Insert: Partial<Timestamps> & {
+          id?: string;
+          provider_id: string;
+          status?: IngestionStatus;
+          started_at?: string;
+          finished_at?: string | null;
+          records_received?: number;
+          records_created?: number;
+          records_updated?: number;
+          records_rejected?: number;
+          records_skipped?: number;
+          offers_created?: number;
+          offers_updated?: number;
+          price_changes?: number;
+          matches_queued?: number;
+          error_message?: string | null;
+          error_details?: Json | null;
+          cursor_state?: Json | null;
+          options?: Json;
+        };
+        Update: Partial<Database['public']['Tables']['ingestion_runs']['Insert']>;
+        Relationships: [];
+      };
+
+      /** Migration 0003. Service-role only. */
+      ingestion_errors: {
+        Row: {
+          id: number;
+          run_id: string;
+          stage: 'fetch' | 'normalise' | 'validate' | 'match' | 'persist';
+          external_id: string | null;
+          reason: string;
+          payload: Json | null;
+          occurred_at: string;
+        };
+        Insert: {
+          id?: number;
+          run_id: string;
+          stage: 'fetch' | 'normalise' | 'validate' | 'match' | 'persist';
+          external_id?: string | null;
+          reason: string;
+          payload?: Json | null;
+          occurred_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['ingestion_errors']['Insert']>;
+        Relationships: [];
+      };
+
+      /**
+       * Migration 0003. Single row, service-role only.
+       * Read through `mock_products_allowed()`, never directly.
+       */
+      app_settings: {
+        Row: { id: boolean; allow_mock_products: boolean; updated_at: string };
+        Insert: { id?: boolean; allow_mock_products?: boolean; updated_at?: string };
+        Update: Partial<Database['public']['Tables']['app_settings']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: {
       /**
@@ -327,6 +524,28 @@ export interface Database {
           currency: string;
           availability: Availability;
           observed_at: string;
+        };
+        Relationships: [];
+      };
+
+      /**
+       * Price extremes from observed history (migration 0003).
+       *
+       * `observation_days` is published deliberately: a "lowest price in 90
+       * days" claim backed by two days of data is a lie with a number in it,
+       * so a consumer is given what it needs to decline to render one.
+       */
+      product_price_stats: {
+        Row: {
+          product_id: string;
+          currency: string;
+          lowest_in_stock_minor: number | null;
+          highest_in_stock_minor: number | null;
+          lowest_seen_minor: number | null;
+          observation_count: number;
+          observation_days: number;
+          first_observed_at: string;
+          last_observed_at: string;
         };
         Relationships: [];
       };
@@ -384,11 +603,41 @@ export interface Database {
           total_count: number;
         }[];
       };
+
+      /**
+       * Tiered product identity matching (migration 0003). Ingestion only —
+       * EXECUTE is revoked from PUBLIC.
+       *
+       * Every argument is listed for the same reason as search_products above.
+       */
+      find_product_matches: {
+        Args: {
+          p_identifiers: Json;
+          p_brand_id: string | null;
+          p_title: string | null;
+          p_gender: Gender | null;
+          p_category_id: string | null;
+          p_price_minor: number | null;
+          p_currency: string;
+          p_exclude_product_id: string | null;
+          p_limit: number;
+        };
+        Returns: {
+          product_id: string;
+          method: MatchMethod;
+          confidence: number;
+          signals: Json;
+        }[];
+      };
     };
     Enums: {
       user_role: UserRole;
       gender: Gender;
       availability: Availability;
+      identifier_type: IdentifierType;
+      match_method: MatchMethod;
+      match_decision: MatchDecision;
+      ingestion_status: IngestionStatus;
     };
     CompositeTypes: Record<never, never>;
   };

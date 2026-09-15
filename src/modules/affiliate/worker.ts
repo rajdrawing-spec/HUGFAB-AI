@@ -120,7 +120,9 @@ export async function runIngestion(options: IngestionOptions): Promise<Ingestion
         if (!parsed.success) {
           await reject(
             'validate',
-            parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+            parsed.error.issues
+              .map((i) => `${i.path.join('.')}: ${i.message}`)
+              .join('; '),
             readExternalId(normalised),
             raw,
           );

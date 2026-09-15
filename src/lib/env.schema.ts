@@ -74,6 +74,21 @@ export function serverEnvSchema(nodeEnv: NodeEnv) {
      */
     CLICK_IP_SALT: optional,
 
+    /**
+     * Affiliate network credentials, read by
+     * `modules/affiliate/registry.ts` under the convention
+     * `<SLUG>_CLIENT_ID` / `<SLUG>_CLIENT_SECRET` / `<SLUG>_WEBSITE_ID`.
+     *
+     * Admitad's are named here because it is the approved first network and a
+     * typo in a key nothing validates is a silent failure. They stay optional
+     * in every environment: the application must run, and the site must serve,
+     * before a publisher application has been approved. Ingestion refuses to
+     * start without them and says which one is missing.
+     */
+    ADMITAD_CLIENT_ID: optional,
+    ADMITAD_CLIENT_SECRET: optional,
+    ADMITAD_WEBSITE_ID: optional,
+
     SENTRY_ENVIRONMENT: z.string().trim().default(nodeEnv),
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 

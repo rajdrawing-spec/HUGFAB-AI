@@ -81,7 +81,9 @@ describe('counting', () => {
     expect(summary.recordsRejected).toBe(0);
     expect(summary.offersCreated).toBe(3);
     expect(
-      summary.recordsCreated + summary.recordsUpdated + summary.recordsRejected +
+      summary.recordsCreated +
+        summary.recordsUpdated +
+        summary.recordsRejected +
         summary.recordsSkipped,
     ).toBe(summary.recordsReceived);
   });

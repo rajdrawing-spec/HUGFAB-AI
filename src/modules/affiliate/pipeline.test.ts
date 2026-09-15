@@ -98,7 +98,10 @@ describe('cross-provider identity', () => {
 
   it('does not overwrite the existing description when merging', async () => {
     await ingestProduct(
-      product({ externalId: 'A-1', identifiers: [{ type: 'ean', value: '0036000291452' }] }),
+      product({
+        externalId: 'A-1',
+        identifiers: [{ type: 'ean', value: '0036000291452' }],
+      }),
       context('provider-a'),
     );
 
@@ -251,7 +254,10 @@ describe('identifiers', () => {
 
   it('never merges two products on an invalid barcode they happen to share', async () => {
     const first = await ingestProduct(
-      product({ externalId: 'A-1', identifiers: [{ type: 'ean', value: '0000000000000' }] }),
+      product({
+        externalId: 'A-1',
+        identifiers: [{ type: 'ean', value: '0000000000000' }],
+      }),
       context('provider-a'),
     );
     const second = await ingestProduct(

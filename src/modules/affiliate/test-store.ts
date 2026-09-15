@@ -60,11 +60,7 @@ export class InMemoryIngestionStore implements IngestionStore {
     return 'run-1';
   }
 
-  async finishRun(
-    _runId: string,
-    status: RunStatus,
-    counts: RunCounts,
-  ): Promise<void> {
+  async finishRun(_runId: string, status: RunStatus, counts: RunCounts): Promise<void> {
     this.finished = { status, counts };
   }
 
@@ -151,7 +147,9 @@ export class InMemoryIngestionStore implements IngestionStore {
     const existing = this.identifiers.get(productId) ?? [];
     const merged = [...existing];
     for (const identifier of identifiers) {
-      if (!merged.some((m) => m.type === identifier.type && m.value === identifier.value)) {
+      if (
+        !merged.some((m) => m.type === identifier.type && m.value === identifier.value)
+      ) {
         merged.push(identifier);
       }
     }
