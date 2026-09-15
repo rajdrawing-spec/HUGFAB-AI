@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { IDENTIFIER_TYPES } from './identifiers';
+
 /**
  * The affiliate boundary.
  *
@@ -36,6 +38,19 @@ export const normalisedOfferSchema = z.object({
   affiliateUrl: z.string().url().nullable(),
 });
 
+/**
+ * One real-world identifier as a feed reported it.
+ *
+ * Unvalidated on purpose: a provider says what it was told, and
+ * `normaliseIdentifiers` decides what survives. A provider adapter that
+ * silently dropped a malformed barcode would hide a broken feed; dropping it
+ * one layer later means it is counted.
+ */
+export const rawIdentifierSchema = z.object({
+  type: z.enum(IDENTIFIER_TYPES),
+  value: z.string().trim().min(1).max(200),
+});
+
 export const normalisedProductSchema = z
   .object({
     externalId: z.string().trim().min(1).max(200),
@@ -51,6 +66,21 @@ export const normalisedProductSchema = z
      * terms, never copied into our storage (PRD §32, §74).
      */
     imageUrls: z.array(z.string().url()).max(20),
+
+    /**
+     * Everything the feed claims identifies this product: GTIN/EAN/UPC/ISBN,
+     * ASIN, MPN, SKU, style code. Usually empty, frequently wrong, and the
+     * only thing that will ever merge two products automatically — so it is
+     * carried as a list of claims rather than a single trusted field.
+     */
+    identifiers: z.array(rawIdentifierSchema).max(20).default([]),
+
+    /**
+     * The brand's own model or article code, when the feed labels it clearly
+     * enough to be worth keeping outside `identifiers`. Display only.
+     */
+    modelName: z.string().trim().max(200).nullable().default(null),
+
     offers: z.array(normalisedOfferSchema).min(1),
   })
   .refine(
@@ -78,6 +108,28 @@ export interface FeedPage {
  * interface, so adding a network is a new file rather than a new branch in the
  * pipeline.
  */
+/**
+ * Everything a provider adapter needs in order to run, supplied from the
+ * environment and the `affiliate_providers.config` row.
+ *
+ * Adapters read their settings from here rather than from `process.env`
+ * directly. That is what keeps advertiser ids, feed URLs, credentials and
+ * retailer assumptions out of the code: adding a second Admitad advertiser is
+ * a configuration row, not a deployment.
+ */
+export interface ProviderCredentials {
+  readonly clientId: string;
+  readonly clientSecret: string;
+  /** The publisher's own site/space id with the network, when it uses one. */
+  readonly websiteId?: string | undefined;
+}
+
+export interface ProviderRuntimeConfig {
+  /** Non-secret settings, mirrored from `affiliate_providers.config`. */
+  readonly settings: Record<string, unknown>;
+  readonly credentials: ProviderCredentials;
+}
+
 export interface AffiliateProvider {
   readonly slug: string;
   readonly name: string;
@@ -97,13 +149,34 @@ export interface AffiliateProvider {
   buildTrackedUrl(productUrl: string, subId?: string): string;
 }
 
-/** Outcome of one ingestion run, for the admin surface and the logs. */
+/**
+ * A provider adapter is constructed from its configuration, never imported
+ * pre-built. One module can therefore serve two advertisers on the same
+ * network, and a test can construct one against a fixture feed.
+ */
+export type AffiliateProviderFactory = (
+  config: ProviderRuntimeConfig,
+) => AffiliateProvider;
+
+/**
+ * Outcome of one ingestion run. Mirrors the count columns on
+ * `public.ingestion_runs`, which carry the same names for the same reason: a
+ * summary that disagrees with the row it describes is worse than no summary.
+ */
 export interface IngestionSummary {
+  runId: string | null;
   provider: string;
-  fetched: number;
-  normalised: number;
-  rejected: number;
-  upserted: number;
+  status: 'succeeded' | 'partial' | 'failed';
+  recordsReceived: number;
+  recordsCreated: number;
+  recordsUpdated: number;
+  recordsRejected: number;
+  recordsSkipped: number;
+  offersCreated: number;
+  offersUpdated: number;
+  priceChanges: number;
+  matchesQueued: number;
   startedAt: string;
   finishedAt: string;
+  errorMessage?: string | undefined;
 }
