@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { Badge, Card, CardBody, CardHeader, CardTitle } from '@/components/ui';
+import { SearchBar } from '@/components/search';
 import { DEFAULT_MARKET } from '@/lib/locale';
 import { discountPercent, formatMoney, fromMajorUnits } from '@/lib/money';
 
@@ -59,7 +61,16 @@ export default function HomePage() {
           HugFab is being built one phase at a time — the foundation is live.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        {/* useSearchParams needs a boundary or the page opts out of prerendering. */}
+        <div className="mt-8 max-w-xl">
+          <Suspense
+            fallback={<div className="bg-surface-2 h-14 animate-pulse rounded-full" />}
+          >
+            <SearchBar size="lg" />
+          </Suspense>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             href="/signup"
             className="text-button bg-primary text-primary-foreground hover:bg-primary-hover inline-flex h-12 items-center rounded-full px-7 font-semibold transition-colors"
