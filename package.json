@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:fix": "eslint . --fix",
-    "db:verify": "./scripts/verify-migration.sh"
+    "db:verify": "./scripts/verify-migration.sh",
+    "ingest": "tsx --conditions=react-server scripts/ingest.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.73.0",
@@ -25,6 +26,7 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.4",
     "clsx": "^2.1.1",
+    "fast-xml-parser": "^5.11.1",
     "next": "^15.5.25",
     "posthog-js": "^1.428.5",
     "react": "^19.2.8",
@@ -46,8 +48,9 @@
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"
   },
-  "description": "HugFab — AI fashion discovery, comparison, shopping and community platform."
+  "description": "HugFab \u2014 AI fashion discovery, comparison, shopping and community platform."
 }

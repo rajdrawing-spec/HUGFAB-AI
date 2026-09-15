@@ -84,3 +84,15 @@ values
   ('d0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000004',
    749900, 999900, 'INR', 'in_stock')
 on conflict (product_id, variant_id, retailer_id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- The local opt-in for mock visibility (0003, Part 9).
+--
+-- Every product above is `is_mock = true`, and since 0003 the RLS policies hide
+-- mock rows from anon and authenticated unless this flag is set. This line is
+-- the only place in the repository that sets it, and this file is applied only
+-- by `supabase db reset` against a local database — never against a hosted
+-- project. A production Supabase project therefore cannot serve these rows,
+-- whatever a query asks for.
+-- ---------------------------------------------------------------------------
+update public.app_settings set allow_mock_products = true where id;
