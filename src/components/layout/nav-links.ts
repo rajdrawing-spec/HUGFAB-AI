@@ -36,7 +36,7 @@ export const UTILITY_NAV: readonly NavLink[] = [
  */
 export const MOBILE_NAV: readonly NavLink[] = [
   { href: '/', label: 'Home' },
-  { href: '/search', label: 'Search', phase: 1 },
+  { href: '/search', label: 'Search' },
   { href: '/community', label: 'Community', phase: 3 },
   { href: '/settings', label: 'Profile' },
 ];
