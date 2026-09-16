@@ -3,8 +3,20 @@ name: Database
 # Migrations reach production the same way everything else does: merge to main.
 # Nobody applies SQL by hand and nobody needs a local machine.
 #
-#   pull request  ->  prove locally, then dry run against production (no changes)
-#   merge to main ->  prove locally, then apply
+# Two jobs, and the split is the security boundary rather than tidiness:
+#
+#   verify   PR, main, manual. Applies every migration to a disposable
+#            PostgreSQL and runs the 53 assertions. References no secrets at
+#            all, so there is nothing for a pull request to reach.
+#   apply    main and manual only. The sole job that touches production, and
+#            the sole job that can see a credential.
+#
+# A pull request cannot run `apply`, so it cannot modify production and cannot
+# read a secret — not because a step is skipped by a condition, but because the
+# secrets are never injected into any job a pull request is allowed to start.
+# That distinction matters: `pull_request` runs the workflow file *from the
+# pull request's own branch*, so a conditional inside a secret-bearing job is
+# only as strong as the condition someone could edit in that same PR.
 #
 # Setup, one time, entirely in the GitHub UI
 # (Settings -> Secrets and variables -> Actions -> New repository secret):
@@ -14,8 +26,9 @@ name: Database
 #   SUPABASE_ACCESS_TOKEN   https://supabase.com/dashboard/account/tokens
 #   SUPABASE_DB_PASSWORD    Project Settings -> Database -> Database password
 #
-# SUPABASE_DB_PASSWORD is the database superuser password. It is a production
-# credential and belongs in GitHub's secret store, never in the repository.
+# SUPABASE_DB_PASSWORD is the database superuser password. It belongs in
+# GitHub's secret store and nowhere else — never in the repository, never in
+# .env.example, never echoed by a step.
 
 on:
   push:
@@ -27,9 +40,13 @@ on:
     paths:
       - 'supabase/migrations/**'
       - '.github/workflows/database.yml'
-  # So a migration can be re-applied after adding the secrets, without an
-  # empty commit.
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run reports what would be applied and changes nothing; apply writes to production'
+        type: choice
+        options: [dry-run, apply]
+        default: dry-run
 
 # Never cancel a run that may be part-way through applying DDL. A cancelled
 # migration leaves a schema nobody has a description of.
@@ -41,22 +58,17 @@ permissions:
   contents: read
 
 jobs:
-  migrate:
-    name: verify · ${{ github.event_name == 'push' && 'apply' || 'dry run' }}
+  verify:
+    name: migrations · RLS assertions
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
-    # Gives the repository owner somewhere to require a manual approval before
-    # production DDL (Settings -> Environments -> production -> Required
-    # reviewers). With no rules configured it is a no-op, so this costs nothing
-    # until it is wanted.
-    environment: production
+    # Deliberately no `environment:` and no `secrets.*` anywhere in this job.
 
-    # The same throwaway Postgres the CI job uses. Production is never touched
-    # by a migration that has not just been applied to an empty database and
-    # passed every assertion.
     services:
       postgres:
+        # pgvector's image, not plain postgres: the first migration enables the
+        # extension.
         image: pgvector/pgvector:pg16
         env:
           POSTGRES_PASSWORD: postgres
@@ -68,30 +80,51 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Install the psql client
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
 
-      - name: Prove the migrations apply to an empty database
-        env:
-          PGHOST: localhost
-          PGPORT: '5432'
-          PGUSER: postgres
-          PGPASSWORD: postgres
+      # Applies every migration to an empty database in filename order and
+      # asserts what each role can actually do — that inactive products stay
+      # hidden, that one user cannot read another's wishlist, that anon cannot
+      # read affiliate URLs. Production is never sent SQL that has not just
+      # passed this.
+      - name: Apply to a disposable database and assert RLS guarantees
         run: ./scripts/verify-migration.sh
+
+  apply:
+    name: ${{ github.event.inputs.mode == 'dry-run' && 'dry run' || 'apply to production' }}
+    needs: verify
+    # The load-bearing line. A pull request never reaches this job, so the
+    # secrets below are never present in a run a pull request can trigger.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Somewhere to require a manual approval before production DDL
+    # (Settings -> Environments -> production -> Required reviewers). With no
+    # rules configured it is a no-op, so it costs nothing until it is wanted.
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
-      # Before the secrets exist, a pull request should say so rather than fail
-      # red — the blocking gate for a PR is CI, not this. On main the same gap
-      # is a real problem: migrations would silently never reach production, so
-      # it fails loudly instead.
+      # Fails loudly rather than skipping: a missing secret here means
+      # migrations silently never reach production, which is the failure mode
+      # this whole workflow exists to remove. Only the names are printed.
       - name: Check for the production credentials
-        id: credentials
         env:
           PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -103,50 +136,46 @@ jobs:
           [ -z "$DB_PASSWORD" ]  && missing="$missing SUPABASE_DB_PASSWORD"
 
           if [ -n "$missing" ]; then
-            if [ "${{ github.event_name }}" = "push" ]; then
-              echo "::error::Missing repository secrets:$missing"
-              echo "Migrations cannot reach production without them." >&2
-              exit 1
-            fi
-            echo "::notice::Missing repository secrets:$missing — skipping the dry run."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Missing repository secrets:$missing"
+            echo "Add them under Settings -> Secrets and variables -> Actions," >&2
+            echo "then re-run this job. No commit is needed." >&2
+            exit 1
           fi
+          echo "All three production secrets are present."
 
       - name: Link the project
-        if: steps.credentials.outputs.ready == 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
 
+      # Prints local versus remote migration versions. Versions and filenames
+      # only — no connection string, no credential.
       - name: What is outstanding
-        if: steps.credentials.outputs.ready == 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: supabase migration list --linked
 
+      # --linked so the target can never be ambiguous, and --skip-vault because
+      # this project keeps no vault secrets — there is no config.toml at all.
       - name: Dry run
-        if: steps.credentials.outputs.ready == 'true' && github.event_name != 'push'
+        if: github.event.inputs.mode == 'dry-run'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        # --linked is explicit so the target can never be ambiguous, and
-        # --skip-vault because this project keeps no vault secrets in
-        # config.toml — there is no config.toml at all.
         run: supabase db push --linked --dry-run --skip-vault
 
+      # A non-zero exit fails the job and the run, in red, on main.
       - name: Apply
-        if: steps.credentials.outputs.ready == 'true' && github.event_name == 'push'
+        if: github.event_name == 'push' || github.event.inputs.mode == 'apply'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: supabase db push --linked --skip-vault
 
       - name: Confirm what is applied
-        if: steps.credentials.outputs.ready == 'true' && github.event_name == 'push'
+        if: github.event_name == 'push' || github.event.inputs.mode == 'apply'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
