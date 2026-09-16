@@ -101,7 +101,11 @@ jobs:
         run: ./scripts/verify-migration.sh
 
   apply:
-    name: ${{ github.event.inputs.mode == 'dry-run' && 'dry run' || 'apply to production' }}
+    # A static name. An expression here renders as its own raw text in the
+    # checks list when the job is skipped, which is most of the time — a
+    # pull request skips this job by design. The mode is visible in the step
+    # names instead, where it always evaluates.
+    name: production database
     needs: verify
     # The load-bearing line. A pull request never reaches this job, so the
     # secrets below are never present in a run a pull request can trigger.
