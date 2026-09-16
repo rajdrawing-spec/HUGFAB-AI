@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input, useToast } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
-import { clientEnv } from '@/lib/env.client';
 import { track } from '@/lib/analytics';
+import { clientEnv } from '@/lib/env.client';
+import { absoluteUrl } from '@/lib/site-url';
 
 export type AuthMode = 'login' | 'signup';
 
@@ -31,6 +32,15 @@ const COPY = {
  * Phase 0 auth shell. Functional, deliberately plain — the designed screens
  * land in Phase 1 alongside docs/ui-ux-guide.md (PRD §56).
  */
+/**
+ * Where Supabase sends the user back to, for both email confirmation and
+ * OAuth. Must exactly match an entry in the project's redirect allow-list, and
+ * must be on the canonical host — the certificate only covers that one.
+ */
+function authCallbackUrl(next: string): string {
+  return `${absoluteUrl('/auth/callback')}?next=${encodeURIComponent(next)}`;
+}
+
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const copy = COPY[mode];
   const router = useRouter();
@@ -58,7 +68,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${clientEnv.NEXT_PUBLIC_SITE_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+            // Absolute, and built from the one canonical origin. This is the
+            // link Supabase puts in the confirmation email, so a wrong host
+            // here does not fail loudly — it sends every new user to a
+            // certificate warning and looks like a broken sign-up.
+            emailRedirectTo: authCallbackUrl(next),
           },
         });
         if (error) throw error;
@@ -87,7 +101,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${clientEnv.NEXT_PUBLIC_SITE_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: authCallbackUrl(next),
         },
       });
       if (error) throw error;

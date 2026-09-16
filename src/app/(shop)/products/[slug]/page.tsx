@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { absoluteUrl, canonicalPath } from '@/lib/site-url';
 import { Badge } from '@/components/ui';
 import { PriceDisplay, PriceComparison } from '@/components/product';
 import { getProductBySlug } from '@/modules/products/service';
@@ -23,11 +24,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const product = await load(params).catch(() => null);
   if (!product) return { title: 'Product not found' };
 
+  const title = product.brand ? `${product.brand.name} ${product.title}` : product.title;
+  const path = canonicalPath(`/products/${product.slug}`);
+
   return {
-    title: product.brand ? `${product.brand.name} ${product.title}` : product.title,
+    title,
     description: product.description ?? undefined,
     // Mock rows must never be indexed as real products.
     robots: product.isMock ? { index: false, follow: false } : undefined,
+    // The apex URL for this product, whatever host the request arrived on.
+    // Without it, the same product reachable on two hostnames reads to a
+    // crawler as two competing pages.
+    alternates: { canonical: path },
+    openGraph: {
+      type: 'website',
+      url: absoluteUrl(path),
+      title,
+      description: product.description ?? undefined,
+      images: product.imageUrls.slice(0, 1).map((url) => ({ url })),
+    },
   };
 }
 

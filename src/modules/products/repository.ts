@@ -3,8 +3,10 @@ import 'server-only';
 import { isProduction } from '@/lib/env.server';
 import { ApiError } from '@/lib/http';
 import { logger } from '@/lib/logger';
+import { createPublicSupabase } from '@/lib/supabase/public';
 import { createServerSupabase } from '@/lib/supabase/server';
 import {
+  indexableProductSchema,
   productDetailRowSchema,
   searchRowSchema,
   type ProductSearchParams,
@@ -129,4 +131,54 @@ export async function findProductBySlug(slug: string) {
   }
 
   return productDetailRowSchema.parse(data);
+}
+
+/**
+ * Slugs for the sitemap: active, real, indexable products.
+ *
+ * Reads through the anonymous client rather than the request-scoped one, so it
+ * works during static generation where `cookies()` does not exist. RLS still
+ * applies, and `is_mock` is excluded explicitly on top of it — the policy hides
+ * mock rows in any hosted environment, but a sitemap is a production artefact
+ * and must never list invented products even when generated from a developer's
+ * machine with the local flag on.
+ *
+ * Never throws. A sitemap missing its products is a degraded sitemap; a
+ * sitemap that fails the build is a failed deploy.
+ */
+export interface IndexableProduct {
+  slug: string;
+  updatedAt: string;
+}
+
+export async function listIndexableProducts(limit = 10_000): Promise<IndexableProduct[]> {
+  const supabase = createPublicSupabase();
+  if (supabase === null) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('slug, updated_at')
+      .eq('is_active', true)
+      .eq('is_mock', false)
+      .order('updated_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      logger.warn('sitemap could not list products', { cause: error.message });
+      return [];
+    }
+
+    return (data ?? []).flatMap((row) => {
+      const parsed = indexableProductSchema.safeParse(row);
+      return parsed.success
+        ? [{ slug: parsed.data.slug, updatedAt: parsed.data.updated_at }]
+        : [];
+    });
+  } catch (error) {
+    logger.warn('sitemap product lookup threw', {
+      cause: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
 }

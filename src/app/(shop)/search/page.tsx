@@ -14,7 +14,11 @@ import { Pagination } from './pagination';
 export const metadata: Metadata = {
   title: 'Search',
   // Result pages are infinite and near-duplicate; they should not be indexed.
+  // `follow` stays on so a crawler still reaches the product pages behind them.
   robots: { index: false, follow: true },
+  // Every query permutation points at the bare search page, so the filters a
+  // visitor happened to share never compete with each other for ranking.
+  alternates: { canonical: '/search' },
 };
 
 type RawParams = Record<string, string | string[] | undefined>;

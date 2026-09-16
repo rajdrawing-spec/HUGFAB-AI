@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Badge, Card, CardBody, CardHeader, CardTitle } from '@/components/ui';
 import { SearchBar } from '@/components/search';
 import { DEFAULT_MARKET } from '@/lib/locale';
@@ -13,6 +14,10 @@ import { discountPercent, formatMoney, fromMajorUnits } from '@/lib/money';
  * category rail, trending grid and comparison table are Phase 1 work, written
  * after docs/ui-ux-guide.md and docs/user-flows.md (PRD §56).
  */
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 const VALUE_PROPS = [
   {
