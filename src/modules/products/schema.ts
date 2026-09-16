@@ -154,3 +154,13 @@ export const productDetailRowSchema = z.object({
 });
 
 export type ProductDetailRow = z.infer<typeof productDetailRowSchema>;
+
+/**
+ * The two columns the sitemap needs. Parsed rather than inferred, for the same
+ * reason as every other row in this module: the Database declaration is
+ * hand-written until a project exists to generate it from.
+ */
+export const indexableProductSchema = z.object({
+  slug: z.string().min(1),
+  updated_at: z.string(),
+});

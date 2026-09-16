@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 /**
- * Runs on every request that is not a static asset. Two jobs:
+ * Runs on every request that is not a static asset. Three jobs:
  *
- *   1. Security headers, including a per-request nonce CSP.
- *   2. Supabase session refresh — Server Components cannot write cookies, so
+ *   1. Redirect the `www` host to the canonical apex.
+ *   2. Security headers, including a per-request nonce CSP.
+ *   3. Supabase session refresh — Server Components cannot write cookies, so
  *      the rotated auth token has to be set here or sessions expire mid-visit.
  *
  * This file deliberately does not import `lib/env.server`: middleware runs on
@@ -14,6 +15,57 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
  */
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+/**
+ * The canonical host, derived from the same variable everything else uses.
+ *
+ * Read at module scope: `NEXT_PUBLIC_SITE_URL` is substituted in at build time,
+ * so there is nothing to recompute per request.
+ */
+const CANONICAL_HOST = (() => {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!configured) return null;
+  try {
+    return new URL(configured).host;
+  } catch {
+    return null;
+  }
+})();
+
+/**
+ * `www.hugfab.com` → `https://hugfab.com`, permanently.
+ *
+ * Done here rather than in the host's redirect panel for three reasons: it is
+ * version-controlled and reviewable, it is testable before it ships, and it
+ * leaves the Node.js/Passenger configuration alone.
+ *
+ * **It cannot loop.** The only host that redirects is the exact string
+ * `www.<canonical>`, and the destination is `<canonical>`, which by
+ * construction is not `www.<canonical>`. Every other host — the apex itself, a
+ * preview hostname, localhost, a health check hitting the container directly —
+ * falls straight through untouched. Redirect loops come from rules that match
+ * their own output; this one cannot.
+ *
+ * 308 rather than 301: it preserves the request method, so a POST to the wrong
+ * host is not silently downgraded to a GET.
+ */
+function canonicalHostRedirect(request: NextRequest): NextResponse | null {
+  if (CANONICAL_HOST === null) return null;
+
+  // The Host header is what the browser asked for. Behind a proxy `nextUrl`
+  // can carry the internal origin instead, which would make this a no-op.
+  const host = request.headers.get('host') ?? request.nextUrl.host;
+  if (host !== `www.${CANONICAL_HOST}`) return null;
+
+  const url = new URL(request.url);
+  url.host = CANONICAL_HOST;
+  url.port = '';
+  // TLS terminates at the proxy, so the inbound request can be plain HTTP even
+  // when the browser used HTTPS. The canonical destination is always HTTPS.
+  url.protocol = 'https:';
+
+  return NextResponse.redirect(url, 308);
+}
 
 function buildCsp(nonce: string): string {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -88,6 +140,11 @@ function applySecurityHeaders(response: NextResponse, csp: string): void {
 }
 
 export async function middleware(request: NextRequest) {
+  // First, and cheapest: a request on the wrong host gets no session work and
+  // no CSP nonce generated for a page it will never be served.
+  const redirect = canonicalHostRedirect(request);
+  if (redirect !== null) return redirect;
+
   const nonce = crypto.randomUUID().replace(/-/g, '');
   const csp = buildCsp(nonce);
 

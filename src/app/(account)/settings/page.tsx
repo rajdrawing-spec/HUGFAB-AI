@@ -3,7 +3,13 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui';
 import { requireUser } from '@/lib/auth';
 import { SignOutButton } from './sign-out-button';
 
-export const metadata: Metadata = { title: 'Settings' };
+export const metadata: Metadata = {
+  title: 'Settings',
+  // Signed-in only; a crawler gets a redirect to the login page and nothing
+  // else. Also disallowed in robots.txt.
+  robots: { index: false, follow: false },
+  alternates: { canonical: '/settings' },
+};
 
 /** Phase 0 shell: proves the server-side session is readable. */
 export default async function SettingsPage() {

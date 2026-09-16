@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { clientEnv } from '@/lib/env.client';
+import { SITE_URL } from '@/lib/site-url';
 import { logger } from '@/lib/logger';
 
 /**
@@ -28,8 +28,10 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/login?error=auth_failed', url.origin));
   }
 
-  // Behind Nginx the request origin is the proxy's; the configured site URL is
-  // the one the browser actually knows.
-  const base = clientEnv.NEXT_PUBLIC_SITE_URL || url.origin;
+  // Behind Nginx the request origin is the proxy's; the canonical site URL is
+  // the one the browser actually knows. It is also the only host the
+  // certificate covers, so redirecting to the request origin could land the
+  // user on a warning page immediately after a successful sign-in.
+  const base = SITE_URL || url.origin;
   return NextResponse.redirect(new URL(destination, base));
 }

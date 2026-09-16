@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { handle } from '@/lib/api';
 import { ApiError, parseSearchParams } from '@/lib/http';
-import { clientEnv } from '@/lib/env.client';
+import { absoluteUrl } from '@/lib/site-url';
 import { clickParamsSchema } from '@/modules/affiliate/schema';
 import { resolveClick } from '@/modules/affiliate/service';
 
@@ -43,7 +43,7 @@ export const GET = handle('GET /api/affiliate/click', async (request) => {
      * the normal 429 from `handle()`.
      */
     if (error instanceof ApiError && error.code === 'NOT_FOUND') {
-      const home = new URL('/?notice=offer-unavailable', clientEnv.NEXT_PUBLIC_SITE_URL);
+      const home = new URL(absoluteUrl('/?notice=offer-unavailable'));
       return NextResponse.redirect(home, {
         status: 302,
         headers: { 'Cache-Control': 'no-store' },

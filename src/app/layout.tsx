@@ -4,7 +4,7 @@ import { Poppins } from 'next/font/google';
 import { AnalyticsProvider, BottomNavigation, Footer, Header } from '@/components/layout';
 import { ToastProvider } from '@/components/ui';
 import { getCurrentUser } from '@/lib/auth';
-import { clientEnv } from '@/lib/env.client';
+import { SITE_URL } from '@/lib/site-url';
 import '@/styles/globals.css';
 
 /**
@@ -19,17 +19,42 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+const DESCRIPTION =
+  'AI-powered fashion discovery. Your style, every store, one place — compare ' +
+  'prices across retailers, discover looks, and shop smarter.';
+
+/**
+ * `metadataBase` is the single origin every relative URL in the tree resolves
+ * against — canonical links, Open Graph URLs, image URLs. It comes from
+ * `SITE_URL`, which is the one place the canonical origin is defined, so a page
+ * cannot advertise a different hostname from the one in the sitemap.
+ */
 export const metadata: Metadata = {
-  metadataBase: new URL(clientEnv.NEXT_PUBLIC_SITE_URL),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'HugFab — See it. Style it. Shop it.',
     template: '%s · HugFab',
   },
-  description:
-    'AI-powered fashion discovery. Your style, every store, one place — compare ' +
-    'prices across retailers, discover looks, and shop smarter.',
+  description: DESCRIPTION,
   applicationName: 'HugFab',
   robots: { index: true, follow: true },
+  // No canonical here. A layout-level default is inherited by every page that
+  // does not set its own, which makes /login and /settings each declare
+  // themselves the canonical version of the homepage. `metadataBase` above
+  // already pins the host for the whole tree; the path is each page's business.
+  openGraph: {
+    type: 'website',
+    siteName: 'HugFab',
+    locale: 'en_IN',
+    url: SITE_URL,
+    title: 'HugFab — See it. Style it. Shop it.',
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HugFab — See it. Style it. Shop it.',
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
