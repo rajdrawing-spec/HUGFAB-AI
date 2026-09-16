@@ -2,7 +2,7 @@
  * Product identifiers: normalisation and validation.
  *
  * This is the TypeScript half of a rule that also exists in SQL
- * (`public.normalise_identifier` in `supabase/migrations/0003_product_identity.sql`).
+ * (`public.normalise_identifier` in `supabase/migrations/20260915184500_product_identity.sql`).
  * Two implementations of one rule is a cost, paid deliberately:
  *
  *   * The database version is the authority. It runs on insert, so a bad
