@@ -83,62 +83,76 @@ function Hero() {
         }}
       />
 
-      <div className="mx-auto max-w-6xl px-4 pt-12 pb-10 sm:px-6 sm:pt-20 sm:pb-14">
-        <p
-          aria-hidden="true"
-          className="text-primary text-3xl leading-none sm:text-4xl"
-          style={{ fontFamily: 'var(--font-script)' }}
-        >
-          Fashion made simple with AI
-        </p>
+      <div className="mx-auto flex max-w-6xl items-center gap-10 px-4 pt-12 pb-10 sm:px-6 sm:pt-20 sm:pb-14">
+        <div className="min-w-0 flex-1">
+          <p
+            aria-hidden="true"
+            className="text-primary text-3xl leading-none sm:text-4xl"
+            style={{ fontFamily: 'var(--font-script)' }}
+          >
+            Fashion made simple with AI
+          </p>
 
-        <h1 className="text-display mt-3 max-w-[16ch] text-balance">
-          Your Style. Every Store. <span className="text-primary">One Place.</span>
-        </h1>
+          <h1 className="text-display mt-3 max-w-[16ch] text-balance">
+            Your Style. Every Store. <span className="text-primary">One Place.</span>
+          </h1>
 
-        <p className="text-body-lg text-muted mt-4 max-w-prose">
-          Compare prices across every store, discover styles and shop smarter. One
-          product, every retailer, the price they actually charge.
-        </p>
+          <p className="text-body-lg text-muted mt-4 max-w-prose">
+            Compare prices across every store, discover styles and shop smarter. One
+            product, every retailer, the price they actually charge.
+          </p>
 
-        {/*
+          {/*
           The front door. Wider than the copy above it so it reads as the
           primary action rather than a field at the end of a paragraph.
         */}
-        <div className="mt-8 max-w-2xl">
-          <Suspense fallback={<div className="bg-surface-2 h-13 rounded-full" />}>
-            <SearchBar size="lg" />
-          </Suspense>
-        </div>
+          <div className="mt-8 max-w-2xl">
+            <Suspense fallback={<div className="bg-surface-2 h-13 rounded-full" />}>
+              <SearchBar size="lg" />
+            </Suspense>
+          </div>
 
-        {/*
+          {/*
           What the product promises, not what the catalogue contains. Every
           line here is true before a single product is ingested — which is the
           test any homepage claim has to pass.
         */}
-        <ul className="text-small text-muted mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-          {[
-            'Every price comes from the retailer',
-            'Never marked up',
-            'Best price stated, not implied',
-          ].map((claim) => (
-            <li key={claim} className="inline-flex items-center gap-2">
-              <svg
-                viewBox="0 0 16 16"
-                className="text-accent size-4 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m3 8.5 3.5 3.5L13 5" />
-              </svg>
-              {claim}
-            </li>
-          ))}
-        </ul>
+          <ul className="text-small text-muted mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+            {[
+              'Every price comes from the retailer',
+              'Never marked up',
+              'Best price stated, not implied',
+            ].map((claim) => (
+              <li key={claim} className="inline-flex items-center gap-2">
+                <svg
+                  viewBox="0 0 16 16"
+                  className="text-accent size-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m3 8.5 3.5 3.5L13 5" />
+                </svg>
+                {claim}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/*
+          Fab, waving. Hidden below `lg` rather than scaled down: on a phone
+          the hero is the search bar and one headline, and a bear competing
+          for that space pushes the front door below the fold.
+
+          He is `aria-hidden` and says nothing the copy does not, so a screen
+          reader loses nothing by never hearing about him.
+        */}
+        <div className="hidden shrink-0 lg:block">
+          <Mascot mood="wave" size="xl" />
+        </div>
       </div>
     </section>
   );
