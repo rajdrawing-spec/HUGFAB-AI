@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { SearchBar } from '@/components/search';
+import { SearchBar, SearchFilters } from '@/components/search';
 import {
   ProductGrid,
   ProductGridEmpty,
@@ -49,6 +49,15 @@ export default async function SearchPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <SearchBar defaultValue={query} size="lg" />
+
+      {/*
+        Client component: it reads and writes the query string, which is where
+        all filter state lives. It renders above the results so a narrowed set
+        is always explained by chips the shopper can see and remove.
+      */}
+      <Suspense fallback={null}>
+        <SearchFilters />
+      </Suspense>
 
       {!parsed.success ? (
         // A malformed filter is the user's URL, not a server fault: show the

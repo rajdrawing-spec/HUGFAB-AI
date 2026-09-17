@@ -78,6 +78,10 @@ export function toProductSummary(row: SearchRow): ProductSummary {
             id: row.best_retailer_id as string,
             slug: row.best_retailer_slug as string,
             name: row.best_retailer_name as string,
+            // `search_products` returns no logo — adding one to its column list
+            // is a migration, and a card does not need it. RetailerBadge draws
+            // a monogram instead of inventing a mark.
+            logoUrl: null,
           },
           priceMinor: row.best_price_minor as number,
           originalMinor: row.best_original_minor,
@@ -88,19 +92,32 @@ export function toProductSummary(row: SearchRow): ProductSummary {
   };
 }
 
+/** The one place a retailer row becomes a domain retailer. */
+function toRetailer(
+  row: NonNullable<ProductDetailRow['prices'][number]['retailer']>,
+): RetailerSummary {
+  return { id: row.id, slug: row.slug, name: row.name, logoUrl: row.logo_url };
+}
+
 export function toProductDetail(row: ProductDetailRow): ProductDetail {
-  const offers = row.prices
-    .filter((price) => price.retailer !== null)
-    .map((price) =>
+  // flatMap rather than filter+map: `filter` does not narrow the row's nullable
+  // retailer for the compiler, and an offer with no retailer is an offer with
+  // nobody to buy it from — it is dropped rather than rendered nameless.
+  const offers = row.prices.flatMap((price) => {
+    const retailer = price.retailer;
+    if (retailer === null) return [];
+
+    return [
       toOffer({
         productId: row.id,
-        retailer: price.retailer as RetailerSummary,
+        retailer: toRetailer(retailer),
         priceMinor: price.price_minor,
         originalMinor: price.original_minor,
         currency: price.currency,
         availability: price.availability,
       }),
-    );
+    ];
+  });
 
   /**
    * Cheapest first, but an out-of-stock offer is not a competitive price — it

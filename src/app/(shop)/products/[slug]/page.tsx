@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { absoluteUrl, canonicalPath } from '@/lib/site-url';
 import { Badge } from '@/components/ui';
-import { PriceDisplay, PriceComparison } from '@/components/product';
+import { PriceDisplay, PriceComparison, TrustRow } from '@/components/product';
 import { getProductBySlug } from '@/modules/products/service';
 import { productSlugSchema } from '@/modules/products/schema';
 
@@ -132,6 +132,22 @@ export default async function ProductPage({ params }: PageProps) {
               <Detail label="Sizes" value={sizeSummary(product.variants)} />
             )}
           </dl>
+
+          {/*
+            The retailer's delivery, returns and authenticity claims, under the
+            buy box as the guide places them. No feed supplies these fields
+            yet, so `claims` is empty and TrustRow renders nothing — which is
+            the point. The guide requires these to be "sourced from the feed,
+            not asserted by HugFab", so there is no default set to fall back on
+            and a hard-coded "100% authentic" has nowhere to live.
+          */}
+          {product.bestOffer && (
+            <TrustRow
+              claims={[]}
+              retailerName={product.bestOffer.retailer.name}
+              className="mt-6"
+            />
+          )}
         </div>
       </div>
 

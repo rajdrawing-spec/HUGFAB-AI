@@ -8,3 +8,14 @@ export {
   ProductGridSkeleton,
   type EmptyStateProps,
 } from './product-grid';
+export {
+  RetailerBadge,
+  type RetailerBadgeProps,
+  type RetailerBadgeSize,
+} from './retailer-badge';
+export {
+  TrustRow,
+  type TrustClaim,
+  type TrustClaimKind,
+  type TrustRowProps,
+} from './trust-row';

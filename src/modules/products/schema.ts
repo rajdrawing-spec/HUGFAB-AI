@@ -88,6 +88,16 @@ const availability = z.enum([
 
 const summaryRow = z.object({ id: z.string(), slug: z.string(), name: z.string() });
 
+/**
+ * A retailer carries a logo; a brand and a category do not, so this is its own
+ * row rather than an optional field on the shared one. `.catch(null)` because a
+ * malformed logo URL should cost the badge its artwork, not cost the shopper
+ * the whole product page.
+ */
+const retailerRow = summaryRow.extend({
+  logo_url: z.string().url().nullable().catch(null),
+});
+
 export const searchRowSchema = z.object({
   id: z.string(),
   slug: z.string(),
@@ -148,7 +158,7 @@ export const productDetailRowSchema = z.object({
       original_minor: z.number().nullable(),
       currency: z.string(),
       availability,
-      retailer: summaryRow.nullable(),
+      retailer: retailerRow.nullable(),
     }),
   ),
 });
@@ -163,4 +173,11 @@ export type ProductDetailRow = z.infer<typeof productDetailRowSchema>;
 export const indexableProductSchema = z.object({
   slug: z.string().min(1),
   updated_at: z.string(),
+});
+
+/** A category as the rail needs it. Parsed rather than inferred, as ever. */
+export const categoryRowSchema = z.object({
+  id: z.string(),
+  slug: z.string().min(1),
+  name: z.string().min(1),
 });
