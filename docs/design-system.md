@@ -17,7 +17,7 @@ symbol.** It uses a token utility (`bg-surface`, `text-h2`, `rounded-lg`) or
 `lib/money.ts`. A re-theme, or a second market, then happens in one file instead
 of two hundred.
 
-If you find yourself typing `#FF3B7A`, `text-[15px]` or `₹` inside a component,
+If you find yourself typing `#DC2626`, `text-[15px]` or `₹` inside a component,
 the token you want either exists under another name or needs adding here first.
 
 ## Colour
@@ -33,7 +33,7 @@ what it looks like today.
 | `text` | `#111827` | Primary text |
 | `muted` | `#687280` | Secondary text |
 | `border` / `border-strong` | `#E5E8EF` / `#CFD5E1` | Dividers / input outlines |
-| `primary` | `#FF3B7A` | Brand. CTAs, active nav, selected chips |
+| `primary` | `#DC2626` | Brand red, from the bear mark. CTAs, active nav, selected chips. AA with white text (4.83:1) — the pink it replaced was 3.41:1 and failed. The logo keeps its brighter red inside the mark, where text-contrast rules do not apply. |
 | `secondary` | `#7C3AED` | Supporting brand accents |
 | `accent` | `#00C896` | Positive signals — in stock, savings |
 | `dark` | `#0F172A` | Deliberate dark panels (the guide's Plus banner) |
@@ -118,3 +118,41 @@ Not a phase — a condition of merge.
 
 Never define a colour only inside a media query — a token that exists in one
 theme and not the other fails silently in the other.
+
+---
+
+## The mark and the mascot
+
+**Two reds, on purpose.**
+
+| Token | Value | Where |
+|---|---|---|
+| `--hf-logo` | `#F5100F` | Inside the bear mark only |
+| `primary` | `#DC2626` | Every UI surface — CTAs, chips, focus rings, Best Price |
+
+A logo carries no text, so it is not bound by contrast rules and keeps the
+brightness the brand was drawn with. `primary` is a shade deeper because white
+text sits on it: pure red with white is 4.00:1 and fails WCAG AA, while
+`#DC2626` is 4.83:1 on a fill, 4.58:1 as text on the page ground and 4.83:1 on
+a surface — AA in every direction the token is used.
+
+Do not "fix" the difference by unifying them. It is measured, not accidental.
+
+**Fab**, the mascot (`src/components/brand/mascot.tsx`), has four moods —
+`empty`, `searching`, `oops`, `wave` — and one job: carrying the screens that
+have no content to show. An empty catalogue, a search with nothing found, an
+error, a slow load.
+
+Three rules:
+
+1. **Beside the message, never instead of it.** "Nothing listed yet" still says
+   so. The mascot adds warmth to an honest empty state; it never becomes the
+   empty state.
+2. **Motion is opt-out.** Every animation is behind `motion-safe:`, so a
+   visitor whose system asks for reduced motion gets a still bear. That setting
+   is used by people who get motion sickness.
+3. **Decorative, so `aria-hidden`.** The text beside it is what a screen reader
+   should hear.
+
+Amplitudes are deliberately small. A mascot that bounces hard on an error
+screen reads as cheerful about the error.
