@@ -44,30 +44,100 @@ export default function HomePage() {
   );
 }
 
+/**
+ * The hero, from the concept.
+ *
+ * Three things the guide fixes and this follows:
+ *
+ *   * **The headline is the concept's own**, "Your Style. Every Store. One
+ *     Place." — not a paraphrase. It is the line the design was drawn around
+ *     and the one already live.
+ *   * **Search is the front door** (§1). The pill sits directly under the
+ *     headline with nothing competing for the same attention, and category
+ *     browsing goes underneath it rather than above.
+ *   * **The script accent has a narrow remit** (§7): one editorial aside,
+ *     decorative, never load-bearing. It is `aria-hidden` and the headline
+ *     beneath carries the meaning, so a screen reader is not read a
+ *     handwritten flourish.
+ *
+ * The supporting line says what the product does and claims no figures. There
+ * are no retailer counts or product totals here, because there is no catalogue
+ * yet and a number on a homepage is a promise (PRD §69).
+ */
 function Hero() {
   return (
-    <section className="from-primary-soft to-surface bg-gradient-to-b">
-      <div className="mx-auto max-w-6xl px-4 pt-14 pb-10 sm:px-6 sm:pt-20 sm:pb-14">
-        <h1 className="text-display max-w-[14ch] text-balance">
-          See it. Style it. <span className="text-primary">Shop it.</span>
+    <section className="relative isolate overflow-hidden">
+      {/*
+        Two soft radial washes rather than a flat band — the concept's homepage
+        reads as colour bleeding down behind the content, not a coloured box
+        sitting on top of it. Decorative, so it is hidden from assistive tech.
+      */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            'radial-gradient(60rem 30rem at 15% -10%, var(--color-primary-soft), transparent 60%),' +
+            'radial-gradient(50rem 28rem at 95% 0%, var(--color-secondary-soft), transparent 55%)',
+        }}
+      />
+
+      <div className="mx-auto max-w-6xl px-4 pt-12 pb-10 sm:px-6 sm:pt-20 sm:pb-14">
+        <p
+          aria-hidden="true"
+          className="text-primary text-3xl leading-none sm:text-4xl"
+          style={{ fontFamily: 'var(--font-script)' }}
+        >
+          Fashion made simple with AI
+        </p>
+
+        <h1 className="text-display mt-3 max-w-[16ch] text-balance">
+          Your Style. Every Store. <span className="text-primary">One Place.</span>
         </h1>
 
         <p className="text-body-lg text-muted mt-4 max-w-prose">
-          One product, every retailer, the real best price. Search across stores, compare
-          what they actually charge, and buy from whoever is cheapest.
+          Compare prices across every store, discover styles and shop smarter. One
+          product, every retailer, the price they actually charge.
         </p>
 
+        {/*
+          The front door. Wider than the copy above it so it reads as the
+          primary action rather than a field at the end of a paragraph.
+        */}
         <div className="mt-8 max-w-2xl">
-          {/*
-            SearchBar reads the query string to seed itself, so it needs a
-            boundary for the homepage shell to prerender. The fallback matches
-            the bar's height exactly, so the hero does not reflow when it
-            hydrates.
-          */}
           <Suspense fallback={<div className="bg-surface-2 h-13 rounded-full" />}>
             <SearchBar size="lg" />
           </Suspense>
         </div>
+
+        {/*
+          What the product promises, not what the catalogue contains. Every
+          line here is true before a single product is ingested — which is the
+          test any homepage claim has to pass.
+        */}
+        <ul className="text-small text-muted mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+          {[
+            'Every price comes from the retailer',
+            'Never marked up',
+            'Best price stated, not implied',
+          ].map((claim) => (
+            <li key={claim} className="inline-flex items-center gap-2">
+              <svg
+                viewBox="0 0 16 16"
+                className="text-accent size-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m3 8.5 3.5 3.5L13 5" />
+              </svg>
+              {claim}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
