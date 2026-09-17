@@ -55,6 +55,17 @@
    */
   --hf-logo: #f5100f;
 
+  /*
+   * The eyes, nose and arms inside the mark. White in both themes, for the
+   * same reason the red is: they are part of the drawing, not part of the
+   * page. Reusing `surface` here would make the features navy in dark mode —
+   * the bear would still be red, and would still be a different bear.
+   *
+   * Deliberately absent from every dark-mode block below. Adding it there is
+   * the mistake this comment exists to prevent.
+   */
+  --hf-logo-ink: #ffffff;
+
   --hf-primary: #dc2626;
   --hf-primary-hover: #b91c1c; /* derived — 6.47:1 with white */
   --hf-primary-foreground: #ffffff;

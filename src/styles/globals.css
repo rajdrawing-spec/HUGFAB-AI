@@ -237,22 +237,6 @@
   }
 }
 
-/* Long gaps between blinks, and a double blink, so it does not read as a
-   metronome. */
-@keyframes fab-blink {
-  0%,
-  46%,
-  52%,
-  58%,
-  100% {
-    transform: scaleY(1);
-  }
-  49%,
-  55% {
-    transform: scaleY(0.12);
-  }
-}
-
 @keyframes fab-sweep {
   0%,
   100% {
@@ -263,5 +247,136 @@
   }
   70% {
     transform: translate(4px, -2px) rotate(8deg);
+  }
+}
+
+/*
+ * Every transform below is written in the mark's own 512×512 coordinates, so
+ * `transform-origin: 136px 242px` means the bear's shoulder rather than a
+ * point on the screen. That only holds while `transform-box` is `view-box`;
+ * it is stated rather than inherited because the default has moved before and
+ * a silent change would send every limb pivoting around the wrong point.
+ */
+.fab-root :where(g, path, ellipse, circle) {
+  transform-box: view-box;
+}
+
+/* Resting. Barely visible on purpose — it should read as alive, not as
+   animated. */
+@keyframes fab-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.014, 0.986);
+  }
+}
+
+/*
+ * The poke. Squash before the move and overshoot on the way back, which is
+ * the whole difference between a bear who is funny and a bear who is merely
+ * moving: he compresses, springs, then settles past the mark and returns.
+ */
+@keyframes fab-squish {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  28% {
+    transform: scale(1.11, 0.88) translateY(6px);
+  }
+  62% {
+    transform: scale(0.95, 1.06) translateY(-3px);
+  }
+  82% {
+    transform: scale(1.02, 0.98);
+  }
+}
+
+/* Three pokes in a row and he gives up on dignity. Crouch, launch, land, wobble. */
+@keyframes fab-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  18% {
+    transform: translateY(8px) scale(1.12, 0.86);
+  }
+  46% {
+    transform: translateY(-34px) scale(0.93, 1.09);
+  }
+  72% {
+    transform: translateY(0) scale(1.1, 0.9);
+  }
+  88% {
+    transform: translateY(0) scale(0.97, 1.03);
+  }
+}
+
+/* A wave from the shoulder, with the pause a real wave has at the top. */
+@keyframes fab-wave {
+  0%,
+  72%,
+  100% {
+    transform: rotate(0deg);
+  }
+  12% {
+    transform: rotate(-42deg);
+  }
+  26% {
+    transform: rotate(-22deg);
+  }
+  40% {
+    transform: rotate(-42deg);
+  }
+  54% {
+    transform: rotate(-20deg);
+  }
+  64% {
+    transform: rotate(-36deg);
+  }
+}
+
+/* Ears flick and settle, mirrored so both do not lean the same way. */
+@keyframes fab-ear {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-11deg);
+  }
+  62% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes fab-ear-r {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(11deg);
+  }
+  62% {
+    transform: rotate(-5deg);
+  }
+}
+
+/* Reading the shelf: across, back, and a pause at each end. */
+@keyframes fab-scan {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  22%,
+  34% {
+    transform: translateX(-11px);
+  }
+  62%,
+  74% {
+    transform: translateX(11px);
   }
 }

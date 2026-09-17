@@ -1,4 +1,16 @@
 import { cn } from '@/lib/cn';
+import {
+  FAB_ARM_LEFT,
+  FAB_ARM_RIGHT,
+  FAB_ARM_STROKE,
+  FAB_BODY_PATH,
+  FAB_EAR_LEFT,
+  FAB_EAR_RIGHT,
+  FAB_EYE_LEFT,
+  FAB_EYE_RIGHT,
+  FAB_NOSE_PATH,
+  FAB_VIEWBOX,
+} from '@/components/brand/fab-shape';
 
 /**
  * The HugFab mark: the bear, and the HUGFAB wordmark beside it.
@@ -14,8 +26,10 @@ import { cn } from '@/lib/cn';
  * is why `--hf-logo` exists as its own token rather than reusing `primary`:
  * the difference is intentional and should survive someone "fixing" it later.
  *
- * If the original vector differs from this reconstruction, replace the paths
- * here — everything else about the component can stay.
+ * The geometry lives in `@/components/brand/fab-shape`, shared with the
+ * mascot. One source, because the header bear and the bear on an empty search
+ * page have to be the same animal — a shopper notices when they are not, even
+ * without being able to say what changed.
  */
 
 export interface LogoProps {
@@ -45,35 +59,39 @@ export function Logo({ className, markOnly = false, tone = 'brand' }: LogoProps)
 export function BearMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 64 64"
+      viewBox={FAB_VIEWBOX}
       className={className}
       fill="none"
       role="img"
       aria-label="HugFab"
     >
-      {/* Ears and head, one path — a separate ear shape shows a seam when the
-          mark is scaled down or rendered on a non-white ground. */}
-      <path
-        d="M10 14c0-4.4 3.6-8 8-8s8 3.6 8 8v2h12v-2c0-4.4 3.6-8 8-8s8 3.6 8 8v14c0 15.5-10.7 28-24 28S10 43.5 10 28V14Z"
-        fill="currentColor"
-      />
-      {/* Eyes, knocked out. */}
-      <ellipse cx="24" cy="28" rx="4.4" ry="5.6" fill="var(--hf-surface)" />
-      <ellipse cx="40" cy="28" rx="4.4" ry="5.6" fill="var(--hf-surface)" />
-      {/* The muzzle's crossed whiskers, the detail that makes it this bear
-          rather than any bear. */}
-      <path
-        d="M22 42c4.5 1.8 7.6 3.4 10 5.4 2.4-2 5.5-3.6 10-5.4"
-        stroke="var(--hf-surface)"
-        strokeWidth="2.6"
+      {/* Ears before the body, same fill: no seam, and the crown stays flat
+          rather than turning into two circles behind a dome. */}
+      <g fill="currentColor">
+        <ellipse {...FAB_EAR_LEFT} />
+        <ellipse {...FAB_EAR_RIGHT} />
+        <path d={FAB_BODY_PATH} />
+      </g>
+
+      <g fill="var(--hf-logo-ink)">
+        <ellipse {...FAB_EYE_LEFT} />
+        <ellipse {...FAB_EYE_RIGHT} />
+        <path d={FAB_NOSE_PATH} />
+      </g>
+
+      {/* The arms, crossed. This is the detail that makes it this bear and not
+          any bear, and it is the product's name drawn in the mark — so if the
+          logo is ever simplified for a favicon, this is the last thing to go. */}
+      <g
+        stroke="var(--hf-logo-ink)"
+        strokeWidth={FAB_ARM_STROKE}
         strokeLinecap="round"
-      />
-      <path
-        d="M22 49c4.5-1.8 7.6-3.4 10-5.4 2.4 2 5.5 3.6 10 5.4"
-        stroke="var(--hf-surface)"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-      />
+        fill="none"
+      >
+        {[...FAB_ARM_LEFT, ...FAB_ARM_RIGHT].map((d) => (
+          <path key={d} d={d} />
+        ))}
+      </g>
     </svg>
   );
 }
