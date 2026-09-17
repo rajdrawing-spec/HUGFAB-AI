@@ -30,10 +30,35 @@
   --hf-dark: #0f172a; /* guide: Dark */
 
   /* ---- brand ------------------------------------------ guide: Brand Colors -- */
-  --hf-primary: #ff3b7a;
-  --hf-primary-hover: #e82d69; /* derived */
+  /*
+   * The brand red, from the HugFab bear mark.
+   *
+   * #dc2626 rather than the mark's brighter red, and the difference is
+   * measured rather than aesthetic: white text on pure #ff0000 is 4.00:1,
+   * which fails WCAG AA for body text. This is 4.83:1 on a white fill, 4.58:1
+   * as text on the page ground and 4.83:1 on a surface — AA in every direction
+   * the token is actually used.
+   *
+   * Worth recording that this *fixes* an existing fault rather than inheriting
+   * one: the pink it replaces (#ff3b7a) was 3.41:1 with white, so every
+   * primary button had been failing AA for normal text.
+   *
+   * The logo keeps its brighter red inside the mark, where it belongs — a
+   * graphic is not held to text-contrast rules, and dulling it would flatten
+   * the brand for no accessibility gain.
+   */
+  /*
+   * The mark's own red, at full strength. Deliberately not `primary`: a logo
+   * carries no text and is not bound by contrast rules, so it keeps the
+   * brightness the brand was drawn with. Same value in both themes — a mark
+   * that changes colour with the OS is two marks.
+   */
+  --hf-logo: #f5100f;
+
+  --hf-primary: #dc2626;
+  --hf-primary-hover: #b91c1c; /* derived — 6.47:1 with white */
   --hf-primary-foreground: #ffffff;
-  --hf-primary-soft: #ffe8f0; /* derived */
+  --hf-primary-soft: #fee2e2; /* derived */
 
   --hf-secondary: #7c3aed;
   --hf-secondary-hover: #6d28d9; /* derived */
@@ -55,7 +80,7 @@
   --hf-error-soft: #fde8e8;
 
   /* ---- interaction ---------------------------------------------- derived -- */
-  --hf-ring: #ff3b7a;
+  --hf-ring: #dc2626; /* matches primary — 4.83:1 on white, above the 3:1 a focus indicator needs */
   --hf-overlay: rgb(15 23 42 / 0.45);
 
   /* ---- elevation ------------------------------------------------ derived -- */
@@ -80,10 +105,12 @@
     --hf-border-strong: #35455f;
     --hf-dark: #060b16;
 
-    --hf-primary: #ff5c90;
-    --hf-primary-hover: #ff7ba6;
-    --hf-primary-foreground: #2b0413;
-    --hf-primary-soft: #3a1526;
+    /* Lifted for the dark ground: 6.77:1 as text, and the same for the dark
+       foreground sitting on a primary fill. */
+    --hf-primary: #f87171;
+    --hf-primary-hover: #fca5a5;
+    --hf-primary-foreground: #2b0404;
+    --hf-primary-soft: #3a1414;
 
     --hf-secondary: #a78bfa;
     --hf-secondary-hover: #c4b5fd;
@@ -102,7 +129,7 @@
     --hf-error: #f87171;
     --hf-error-soft: #3d1a1a;
 
-    --hf-ring: #ff5c90;
+    --hf-ring: #f87171;
     --hf-overlay: rgb(0 0 0 / 0.62);
 
     --hf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
@@ -122,10 +149,12 @@
   --hf-border-strong: #35455f;
   --hf-dark: #060b16;
 
-  --hf-primary: #ff5c90;
-  --hf-primary-hover: #ff7ba6;
-  --hf-primary-foreground: #2b0413;
-  --hf-primary-soft: #3a1526;
+  /* Same values as the prefers-color-scheme block above, so an explicit dark
+     choice and a dark OS resolve identically. */
+  --hf-primary: #f87171;
+  --hf-primary-hover: #fca5a5;
+  --hf-primary-foreground: #2b0404;
+  --hf-primary-soft: #3a1414;
 
   --hf-secondary: #a78bfa;
   --hf-secondary-hover: #c4b5fd;
@@ -144,7 +173,7 @@
   --hf-error: #f87171;
   --hf-error-soft: #3d1a1a;
 
-  --hf-ring: #ff5c90;
+  --hf-ring: #f87171;
   --hf-overlay: rgb(0 0 0 / 0.62);
 
   --hf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);

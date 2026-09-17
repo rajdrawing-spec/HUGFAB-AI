@@ -183,3 +183,85 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Fab, the mascot (src/components/brand/mascot.tsx).
+ *
+ * Declared here rather than inline because Tailwind's arbitrary-animation
+ * syntax needs the keyframes to exist in the stylesheet. Every use is behind
+ * `motion-safe:`, so none of this runs for a visitor who asked their system
+ * for reduced motion.
+ *
+ * Amplitudes are deliberately small. A mascot on an error screen that bounces
+ * hard reads as cheerful about the error.
+ * ------------------------------------------------------------------------- */
+
+@keyframes fab-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes fab-tilt {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-7deg);
+  }
+  40% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes fab-shake {
+  0%,
+  88%,
+  100% {
+    transform: translateX(0);
+  }
+  91% {
+    transform: translateX(-3px);
+  }
+  94% {
+    transform: translateX(3px);
+  }
+  97% {
+    transform: translateX(-2px);
+  }
+}
+
+/* Long gaps between blinks, and a double blink, so it does not read as a
+   metronome. */
+@keyframes fab-blink {
+  0%,
+  46%,
+  52%,
+  58%,
+  100% {
+    transform: scaleY(1);
+  }
+  49%,
+  55% {
+    transform: scaleY(0.12);
+  }
+}
+
+@keyframes fab-sweep {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  35% {
+    transform: translate(-6px, 3px) rotate(-12deg);
+  }
+  70% {
+    transform: translate(4px, -2px) rotate(8deg);
+  }
+}
