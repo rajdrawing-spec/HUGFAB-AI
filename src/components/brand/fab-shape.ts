@@ -20,17 +20,25 @@
 export const FAB_VIEWBOX = '0 0 512 512';
 
 /**
- * Body and head as one silhouette, ending in two feet separated by notches.
+ * Body and head as one silhouette, ending in two feet.
+ *
+ * One notch between them, centred on 256. The mark originally carried a small
+ * tab hanging below the baseline between two narrower notches; it was removed
+ * on request. Two feet and one gap is also the more robust drawing — the tab
+ * was four pixels of overhang that disappeared into an anti-aliased smudge
+ * once the bear was rendered at header size.
+ *
  * The ears are separate shapes rather than part of this path: identical fill,
  * so there is no visible seam, and they can twitch independently.
  */
 export const FAB_BODY_PATH =
   'M112 176 C112 102 152 48 202 48 L310 48 C360 48 400 102 400 176 ' +
-  'L400 434 C400 452 386 466 368 466 L312 466 Q302 466 302 456 ' +
-  'L302 442 Q302 432 292 432 L286 432 Q276 432 276 442 ' +
-  'L276 462 Q276 472 266 472 L246 472 Q236 472 236 462 ' +
-  'L236 442 Q236 432 226 432 L220 432 Q210 432 210 442 ' +
-  'L210 456 Q210 466 200 466 L144 466 C126 466 112 452 112 434 Z';
+  'L400 434 C400 452 386 466 368 466 ' +
+  'L288 466 Q278 466 278 456 ' +
+  'L278 440 Q278 430 268 430 ' +
+  'L244 430 Q234 430 234 440 ' +
+  'L234 456 Q234 466 224 466 ' +
+  'L144 466 C126 466 112 452 112 434 Z';
 
 export const FAB_EAR_LEFT = { cx: 128, cy: 98, rx: 46, ry: 50 } as const;
 export const FAB_EAR_RIGHT = { cx: 384, cy: 98, rx: 46, ry: 50 } as const;
