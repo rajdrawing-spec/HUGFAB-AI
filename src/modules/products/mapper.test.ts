@@ -62,7 +62,12 @@ function offer(
     original_minor: originalMinor,
     currency: 'INR',
     availability,
-    retailer: { id: `r-${retailerSlug}`, slug: retailerSlug, name: retailerSlug },
+    retailer: {
+      id: `r-${retailerSlug}`,
+      slug: retailerSlug,
+      name: retailerSlug,
+      logo_url: null,
+    },
   };
 }
 

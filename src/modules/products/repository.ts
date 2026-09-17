@@ -5,7 +5,9 @@ import { ApiError } from '@/lib/http';
 import { logger } from '@/lib/logger';
 import { createPublicSupabase } from '@/lib/supabase/public';
 import { createServerSupabase } from '@/lib/supabase/server';
+import type { CategorySummary } from './types';
 import {
+  categoryRowSchema,
   indexableProductSchema,
   productDetailRowSchema,
   searchRowSchema,
@@ -112,7 +114,7 @@ export async function findProductBySlug(slug: string) {
        category:categories (id, slug, name),
        product_variants (id, sku, size, color, image_url, availability),
        prices (id, price_minor, original_minor, currency, availability,
-               retailer:retailers (id, slug, name))`,
+               retailer:retailers (id, slug, name, logo_url))`,
     )
     .eq('slug', slug);
 
@@ -177,6 +179,50 @@ export async function listIndexableProducts(limit = 10_000): Promise<IndexablePr
     });
   } catch (error) {
     logger.warn('sitemap product lookup threw', {
+      cause: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}
+
+/**
+ * Top-level categories for the homepage rail, in their configured order.
+ *
+ * Only roots: the rail is a way in, and "Topwear" belongs there while
+ * "Oversized Hoodies" belongs behind it. Nine is the guide's count
+ * (docs/ui-ux-guide.md §4) and a comfortable single row on desktop.
+ *
+ * Reads through the anonymous client, so it works during static generation and
+ * so RLS still decides what comes back. Never throws: a homepage without its
+ * category rail is a smaller loss than a homepage that 500s.
+ */
+export async function listTopCategories(limit = 9): Promise<CategorySummary[]> {
+  const supabase = createPublicSupabase();
+  if (supabase === null) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, slug, name')
+      .is('parent_id', null)
+      .order('position', { ascending: true })
+      .order('name', { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      logger.warn('category rail could not be loaded', {
+        code: error.code,
+        cause: error.message,
+      });
+      return [];
+    }
+
+    return (data ?? []).flatMap((row) => {
+      const parsed = categoryRowSchema.safeParse(row);
+      return parsed.success ? [parsed.data] : [];
+    });
+  } catch (error) {
+    logger.warn('category lookup threw', {
       cause: error instanceof Error ? error.message : String(error),
     });
     return [];

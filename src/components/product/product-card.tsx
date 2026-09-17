@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui';
 import type { ProductSummary } from '@/modules/products/types';
 import { PriceDisplay } from './price-display';
+import { RetailerBadge } from './retailer-badge';
 
 /**
  * A product in a grid. Image, wishlist affordance, brand, title, price cluster,
@@ -72,7 +73,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <>
             <PriceDisplay offer={product.bestOffer} size="sm" className="mt-1" />
             <div className="text-caption text-muted flex items-center gap-1.5">
-              <span>{product.bestOffer.retailer.name}</span>
+              <RetailerBadge retailer={product.bestOffer.retailer} size="sm" />
               {product.offerCount > 1 && (
                 <>
                   <span aria-hidden="true">·</span>

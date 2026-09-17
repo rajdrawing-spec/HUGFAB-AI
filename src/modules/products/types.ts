@@ -19,12 +19,25 @@ export interface CategorySummary {
   id: string;
   slug: string;
   name: string;
+  /**
+   * Artwork for the category rail. Null is the ordinary case — `categories` has
+   * no image column yet — and `CategoryRail` draws a tinted initial instead of
+   * inventing a thumbnail.
+   */
+  imageUrl?: string | null;
 }
 
 export interface RetailerSummary {
   id: string;
   slug: string;
   name: string;
+  /**
+   * The retailer's own mark, as the feed supplies it. Null is the ordinary
+   * case, not an error: `search_products` does not return a logo, and most
+   * feeds name a retailer long before they supply artwork. `RetailerBadge`
+   * falls back to a monogram rather than inventing one.
+   */
+  logoUrl: string | null;
 }
 
 export interface HugFabProduct {

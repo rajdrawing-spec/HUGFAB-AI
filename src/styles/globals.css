@@ -53,6 +53,12 @@
     var(--font-poppins), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   --font-display: var(--font-sans);
+  /*
+   * Editorial accent only (docs/ui-ux-guide.md §7). Marketing surfaces, never
+   * product UI and never a control — a handwritten face in a button is a
+   * legibility problem, not a brand moment.
+   */
+  --font-script: var(--font-caveat), 'Segoe Script', 'Bradley Hand', cursive;
   --font-mono:
     ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 

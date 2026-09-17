@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/cn';
 import type { ProductOffer } from '@/modules/products/types';
+import { RetailerBadge } from './retailer-badge';
 
 /**
  * Price across retailers — the payoff of the whole product
@@ -78,9 +79,7 @@ export function PriceComparison({ offers, isMock = false }: PriceComparisonProps
                 >
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-body text-text font-medium">
-                        {offer.retailer.name}
-                      </span>
+                      <RetailerBadge retailer={offer.retailer} size="md" />
                       {isBest && available && (
                         <Badge tone="primary" variant="solid">
                           Best Price

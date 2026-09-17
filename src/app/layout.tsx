@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Poppins } from 'next/font/google';
+import { Caveat, Poppins } from 'next/font/google';
 import { AnalyticsProvider, BottomNavigation, Footer, Header } from '@/components/layout';
 import { ToastProvider } from '@/components/ui';
 import { getCurrentUser } from '@/lib/auth';
@@ -12,6 +12,24 @@ import '@/styles/globals.css';
  * there is no request to fonts.googleapis.com at runtime — which keeps the CSP
  * tight and removes a third-party dependency from first paint.
  */
+/**
+ * The concept's handwritten accent for editorial asides — "Fashion made simple
+ * with AI" (docs/ui-ux-guide.md §7). Its remit is deliberately narrow:
+ * marketing surfaces only, never in product UI, never in a control, never for
+ * anything a user must read to finish a task.
+ *
+ * The guide holds it back until there is "a `--font-script` token and a
+ * licensed face". Both now exist: Caveat is SIL Open Font License, and
+ * next/font self-hosts it at build time like Poppins, so there is still no
+ * runtime request to a font CDN and the CSP stays tight.
+ */
+const caveat = Caveat({
+  subsets: ['latin'],
+  weight: ['500', '600'],
+  variable: '--font-caveat',
+  display: 'swap',
+});
+
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -72,7 +90,11 @@ export default async function RootLayout({
   const user = await getCurrentUser();
 
   return (
-    <html lang="en" className={poppins.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${poppins.variable} ${caveat.variable}`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-dvh flex-col">
         <ToastProvider>
           <a
