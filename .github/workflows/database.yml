@@ -127,22 +127,79 @@ jobs:
 
       # Fails loudly rather than skipping: a missing secret here means
       # migrations silently never reach production, which is the failure mode
-      # this whole workflow exists to remove. Only the names are printed.
+      # this whole workflow exists to remove.
+      #
+      # It reports *where* each name was found rather than just that it was
+      # not, because "missing" alone does not distinguish the two things that
+      # actually go wrong. Only names are ever printed.
       - name: Check for the production credentials
         env:
           PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          # Read only to tell "not set at all" apart from "set in the wrong
+          # tab". Secrets and Variables are two tabs on the same settings
+          # page, and a credential typed into Variables is invisible to
+          # `secrets.*` — which looks identical to never having added it.
+          #
+          # A value that landed in Variables is readable by anyone with repo
+          # read access, so finding one here means delete and rotate it, never
+          # start using it. These are deliberately never echoed.
+          VAR_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          VAR_ACCESS_TOKEN: ${{ vars.SUPABASE_ACCESS_TOKEN }}
+          VAR_DB_PASSWORD: ${{ vars.SUPABASE_DB_PASSWORD }}
         run: |
           missing=""
-          [ -z "$PROJECT_ID" ]   && missing="$missing SUPABASE_PROJECT_ID"
-          [ -z "$ACCESS_TOKEN" ] && missing="$missing SUPABASE_ACCESS_TOKEN"
-          [ -z "$DB_PASSWORD" ]  && missing="$missing SUPABASE_DB_PASSWORD"
+          misplaced=""
+
+          # $1 name, $2 the secret's value, $3 the same-named variable's value.
+          locate() {
+            if [ -n "$2" ]; then
+              echo "  $1 — present as a secret"
+            elif [ -n "$3" ]; then
+              echo "  $1 — NOT a secret, but a VARIABLE of this name exists"
+              misplaced="$misplaced $1"
+            else
+              echo "  $1 — not set anywhere this job can see"
+              missing="$missing $1"
+            fi
+          }
+
+          echo "What this job can see:"
+          locate SUPABASE_PROJECT_ID   "$PROJECT_ID"   "$VAR_PROJECT_ID"
+          locate SUPABASE_ACCESS_TOKEN "$ACCESS_TOKEN" "$VAR_ACCESS_TOKEN"
+          locate SUPABASE_DB_PASSWORD  "$DB_PASSWORD"  "$VAR_DB_PASSWORD"
+
+          if [ -n "$misplaced" ]; then
+            echo "::error::Stored as Actions variables, not secrets:$misplaced"
+            {
+              echo "Settings -> Secrets and variables -> Actions has two tabs."
+              echo "These were typed into Variables. Delete them there, then add"
+              echo "them under Secrets -> New repository secret."
+              echo "Anyone with read access to this repository could read a"
+              echo "variable, so rotate those values rather than reusing them."
+            } >&2
+          fi
 
           if [ -n "$missing" ]; then
-            echo "::error::Missing repository secrets:$missing"
-            echo "Add them under Settings -> Secrets and variables -> Actions," >&2
-            echo "then re-run this job. No commit is needed." >&2
+            echo "::error::Not set anywhere this job can see:$missing"
+            {
+              echo "Add each under Settings -> Secrets and variables -> Actions"
+              echo "-> Secrets -> New repository secret, then re-run this"
+              echo "workflow. No commit is needed."
+              echo
+              echo "If you believe you already added them, the three things"
+              echo "that make a correctly-typed secret invisible here are:"
+              echo "  * it went to a different repository — this job reads"
+              echo "    rajdrawing-spec/HUGFAB-AI, not a fork of it"
+              echo "  * it went to the Dependabot or Codespaces tab, which"
+              echo "    Actions cannot read"
+              echo "  * it was added to a GitHub Environment whose name is not"
+              echo "    exactly 'production' — the environment this job uses"
+            } >&2
+          fi
+
+          if [ -n "$missing" ] || [ -n "$misplaced" ]; then
             exit 1
           fi
           echo "All three production secrets are present."
