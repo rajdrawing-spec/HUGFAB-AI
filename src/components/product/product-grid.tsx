@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ProductSummary } from '@/modules/products/types';
 import { ProductCard, ProductCardSkeleton } from './product-card';
+import { Mascot } from '@/components/brand';
 
 /**
  * The results grid, and the three states neither design reference settles
@@ -52,7 +53,8 @@ export interface EmptyStateProps {
 export function ProductGridEmpty({ query, hasFilters }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center py-20 text-center">
-      <SearchIcon />
+      {/* Fab looking for it, beside the message rather than in place of it. */}
+      <Mascot mood="searching" size="md" />
       <h2 className="text-h3 mt-4">
         {query ? <>No matches for “{query}”</> : <>Nothing here yet</>}
       </h2>
@@ -93,6 +95,7 @@ export function ProductGridEmpty({ query, hasFilters }: EmptyStateProps) {
 export function ProductGridError({ retryHref }: { retryHref?: string }) {
   return (
     <div className="flex flex-col items-center py-20 text-center" role="alert">
+      <Mascot mood="oops" size="md" className="mb-2" />
       <div className="bg-error-soft text-error flex size-12 items-center justify-center rounded-full">
         <svg
           viewBox="0 0 24 24"
@@ -118,24 +121,6 @@ export function ProductGridError({ retryHref }: { retryHref?: string }) {
           Try again
         </Link>
       )}
-    </div>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <div className="bg-surface-2 text-muted flex size-12 items-center justify-center rounded-full">
-      <svg
-        viewBox="0 0 24 24"
-        className="size-6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        aria-hidden="true"
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-      </svg>
     </div>
   );
 }

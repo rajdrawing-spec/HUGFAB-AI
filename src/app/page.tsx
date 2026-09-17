@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { SearchBar, CategoryRail } from '@/components/search';
 import { ProductGrid, ProductGridSkeleton } from '@/components/product';
+import { Mascot } from '@/components/brand';
 import { logger } from '@/lib/logger';
 import { listTopCategories } from '@/modules/products/repository';
 import { searchProducts } from '@/modules/products/service';
@@ -223,7 +224,9 @@ async function Trending() {
  */
 function EmptyCatalogue() {
   return (
-    <section className="py-16 text-center">
+    <section className="flex flex-col items-center py-16 text-center">
+      {/* Fab beside the message, never instead of it. */}
+      <Mascot mood="empty" size="lg" className="mb-4" />
       <h2 className="text-h2">Nothing listed yet</h2>
       <p className="text-body text-muted mx-auto mt-3 max-w-prose">
         We are connecting retailer feeds now. When products are listed, this is where they
