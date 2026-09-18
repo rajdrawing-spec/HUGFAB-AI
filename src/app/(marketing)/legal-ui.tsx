@@ -1,3 +1,5 @@
+import { COMPANY } from './company';
+
 /**
  * Shared furniture for the legal and contact pages.
  *
@@ -74,5 +76,22 @@ export function LegalItem({
       <b className="text-text block font-semibold">{term}</b>
       <span>{children}</span>
     </li>
+  );
+}
+
+/**
+ * The company mailbox, written once. It appears in both legal pages and on the
+ * contact page, and the Consumer Protection (E-Commerce) Rules require the
+ * customer-care and grievance contact to be displayed accurately — which is an
+ * argument against retyping it.
+ */
+export function MailTo() {
+  return (
+    <a
+      className="text-primary font-medium hover:underline"
+      href={`mailto:${COMPANY.contactEmail}`}
+    >
+      {COMPANY.contactEmail}
+    </a>
   );
 }

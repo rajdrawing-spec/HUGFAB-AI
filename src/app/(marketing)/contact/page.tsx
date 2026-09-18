@@ -1,20 +1,28 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { COMPANY } from '../company';
+import { MailTo } from '../legal-ui';
 
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'How to reach tapashub Pvt Ltd about HugFab — a wrong price, a data request, a partnership, or anything else.',
+    'How to reach tapashub Pvt Ltd about HugFab — customer care, the Grievance Officer, a wrong price, a data request or a partnership.',
   alternates: { canonical: '/contact' },
 };
 
 /**
  * Contact.
  *
- * One address, and an honest account of what it can and cannot do. There is no
- * contact form: a form that posts into a mailbox nobody has wired up is worse
- * than a plain mailto, because it looks like it worked. When there is a form
- * backed by something, it replaces this.
+ * Doubles as the mandatory-disclosure page. The Consumer Protection
+ * (E-Commerce) Rules, 2020 require an e-commerce entity to display its legal
+ * name, the address of its head office, its website details, and the
+ * customer-care and Grievance Officer contacts "in a clear and accessible
+ * manner" — so those sit in one bordered block at the top rather than being
+ * scattered through prose where a reviewer has to hunt for them.
+ *
+ * There is no contact form: a form posting into a mailbox nobody has wired up
+ * is worse than a plain mailto, because it looks like it worked. When there is
+ * a form backed by something, it replaces this.
  *
  * The purchase-support note exists because it is the single most common reason
  * someone writes to a comparison site, and the honest answer — we cannot help,
@@ -31,39 +39,53 @@ export default function ContactPage() {
       </p>
 
       <section className="border-border bg-surface-2 mt-10 rounded-xl border p-6">
-        <p className="text-caption text-muted tracking-wide uppercase">Email</p>
-        <p className="text-h3 mt-1">
-          <a className="text-primary hover:underline" href="mailto:contact@hugfab.com">
-            contact@hugfab.com
-          </a>
-        </p>
+        <Detail label="Operated by">
+          <b className="text-text">{COMPANY.legalName}</b>
+          <br />A private limited company incorporated in India
+        </Detail>
 
-        <div className="border-border mt-6 border-t pt-6">
-          <p className="text-caption text-muted tracking-wide uppercase">
-            Registered office
-          </p>
-          <address className="text-body mt-2 not-italic">
-            tapashub Pvt Ltd
-            <br />
-            Manikonda, Hyderabad
-            <br />
-            Telangana, India
+        <Detail label="Registered office" bordered>
+          <address className="not-italic">
+            {COMPANY.addressLines.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
           </address>
-        </div>
+        </Detail>
+
+        <Detail label="Website" bordered>
+          {COMPANY.website}
+        </Detail>
+
+        <Detail label="Customer care" bordered>
+          <MailTo />
+        </Detail>
+
+        <Detail label="Grievance Officer" bordered>
+          <MailTo />
+          <span className="text-small text-muted mt-1 block">
+            Complaints acknowledged within {COMPANY.grievanceAcknowledgeHours} hours and
+            resolved within {COMPANY.grievanceResolveDays} days, as required by the
+            Consumer Protection (E-Commerce) Rules, 2020. Put &ldquo;Grievance&rdquo; in
+            the subject line.
+          </span>
+        </Detail>
       </section>
 
       <Block title="A price or product looks wrong">
         <p>
           Send us the link to the HugFab page and what you saw. Prices come from
-          retailers&rsquo; feeds and a stale or mismatched listing is a bug on our side —
+          retailers&rsquo; feeds, and a stale or mismatched listing is a bug on our side —
           it is worth reporting and we would rather hear about it than not.
         </p>
       </Block>
 
       <Block title="Something about your data">
         <p>
-          Access, correction, erasure or withdrawing a consent: email us from the address
-          on your account. What we hold and what you can ask for is set out in the{' '}
+          Access, correction, erasure, withdrawing a consent or nominating someone: email
+          us from the address on your account, which is how we identify you. What we hold
+          and what you can ask for is set out in the{' '}
           <Link className="text-primary font-medium hover:underline" href="/privacy">
             Privacy Policy
           </Link>
@@ -90,18 +112,35 @@ export default function ContactPage() {
 
       <div className="border-border mt-12 flex flex-wrap items-center gap-4 border-t pt-8">
         <Link
-          href="/how-it-works"
+          href="/privacy"
           className="text-button border-border-strong hover:bg-surface-2 inline-flex h-11 items-center rounded-full border px-6 font-semibold transition-colors"
         >
-          How it works
+          Privacy Policy
         </Link>
         <Link
-          href="/about"
+          href="/terms"
           className="text-button border-border-strong hover:bg-surface-2 inline-flex h-11 items-center rounded-full border px-6 font-semibold transition-colors"
         >
-          About HugFab
+          Terms of Use
         </Link>
       </div>
+    </div>
+  );
+}
+
+function Detail({
+  label,
+  bordered,
+  children,
+}: {
+  label: string;
+  bordered?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={bordered ? 'border-border mt-5 border-t pt-5' : undefined}>
+      <p className="text-caption text-muted tracking-wide uppercase">{label}</p>
+      <div className="text-body mt-1">{children}</div>
     </div>
   );
 }

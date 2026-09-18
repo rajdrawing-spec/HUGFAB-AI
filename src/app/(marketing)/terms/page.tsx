@@ -1,38 +1,43 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { LegalItem, LegalList, LegalPage, LegalSection } from '../legal-ui';
+import { COMPANY, LEGAL_UPDATED } from '../company';
+import { LegalItem, LegalList, LegalPage, LegalSection, MailTo } from '../legal-ui';
 
 export const metadata: Metadata = {
   title: 'Terms of Use',
   description:
-    'The terms on which HugFab is offered: what the service is, what it is not, how prices are sourced, and how affiliate commissions work.',
+    'The terms on which HugFab is offered: what the service is, what it is not, how prices are sourced, how affiliate commissions work, and how to raise a grievance.',
   alternates: { canonical: '/terms' },
 };
-
-const UPDATED = '18 September 2026';
 
 /**
  * Terms of Use.
  *
  * The important clause is section 2. HugFab is not a shop: it takes no payment,
  * holds no stock and is not a party to the sale. Anything that blurs that would
- * mislead a shopper about who owes them a refund, so it is stated first and
+ * mislead a shopper about who owes them a refund, so it is stated early and
  * stated plainly rather than buried under a liability clause.
+ *
+ * Sections 12 to 14 are the ones an affiliate network's review and the
+ * Consumer Protection (E-Commerce) Rules, 2020 both look for: a published
+ * grievance route with a stated timeframe, a governing law, and the ordinary
+ * contract boilerplate that makes the rest enforceable.
  */
 export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Use"
-      updated={UPDATED}
+      updated={LEGAL_UPDATED}
       intro="These terms govern your use of hugfab.com. They are written to be read, so the
         things that actually matter — that we are not the seller, and that prices come from
         the retailer — are near the top rather than buried."
     >
       <LegalSection n={1} title="Who these terms are with">
         <p>
-          hugfab.com is operated by <b className="text-text">tapashub Pvt Ltd</b>, a
-          private limited company incorporated in India, with its registered office at
-          Manikonda, Hyderabad, Telangana, India. In these terms &ldquo;we&rdquo;,
+          <b className="text-text">{COMPANY.website}</b> is operated by{' '}
+          <b className="text-text">{COMPANY.legalName}</b>, a private limited company
+          incorporated in India, with its registered office at{' '}
+          {COMPANY.addressLines.join(', ')}. In these terms &ldquo;we&rdquo;,
           &ldquo;us&rdquo; and &ldquo;HugFab&rdquo; mean that company, and
           &ldquo;you&rdquo; means the person using the site.
         </p>
@@ -51,8 +56,8 @@ export default function TermsPage() {
           <b className="text-text">We are not a shop.</b> There is no cart and no checkout
           here. We hold no stock, take no payment, ship nothing, and are not a party to
           any contract of sale. When you buy, the contract is between you and the
-          retailer, on their terms. Delivery, returns, refunds, warranty and customer
-          service are theirs, and any complaint about a purchase must go to them.
+          retailer, on their terms. Delivery, returns, refunds, warranty, cancellation and
+          customer service are theirs, and any complaint about a purchase must go to them.
         </p>
       </LegalSection>
 
@@ -165,13 +170,17 @@ export default function TermsPage() {
         <p>We may change, suspend or withdraw any part of the service, at any time.</p>
       </LegalSection>
 
-      <LegalSection n={10} title="Limitation of liability">
+      <LegalSection n={10} title="Limitation of liability and indemnity">
         <p>
           To the extent the law allows, we are not liable for indirect or consequential
           loss, for loss of profit or opportunity, or for any loss arising from a purchase
           you make from a retailer — including a price that had changed, an item that was
           out of stock, a delivery that failed, or a dispute about a refund. Those are
           matters between you and that retailer.
+        </p>
+        <p>
+          You agree to indemnify us against claims, losses and reasonable costs arising
+          from your breach of these terms or your unlawful use of the site.
         </p>
         <p>
           Nothing in these terms excludes liability that cannot lawfully be excluded,
@@ -190,7 +199,56 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection n={12} title="Changes to these terms">
+      <LegalSection n={12} title="Grievance redressal">
+        <p>
+          If something about this site is wrong — a price, a listing, an account problem,
+          or how we have handled your data — write to our Grievance Officer at <MailTo />.
+        </p>
+        <p>
+          We will acknowledge your complaint within{' '}
+          <b className="text-text">{COMPANY.grievanceAcknowledgeHours} hours</b> and
+          resolve it within{' '}
+          <b className="text-text">{COMPANY.grievanceResolveDays} days</b> of receipt, in
+          line with the Consumer Protection (E-Commerce) Rules, 2020.
+        </p>
+        <p>
+          Complaints about an order itself are the retailer&rsquo;s to resolve, for the
+          reason given in section 2, and we will say so rather than leave you waiting.
+        </p>
+      </LegalSection>
+
+      <LegalSection n={13} title="Governing law and jurisdiction">
+        <p>
+          These terms are governed by the laws of India. The courts at{' '}
+          {COMPANY.jurisdiction} have exclusive jurisdiction over any dispute arising from
+          them or from your use of the site.
+        </p>
+      </LegalSection>
+
+      <LegalSection n={14} title="General">
+        <LegalList>
+          <LegalItem term="Severability">
+            If any clause is held unenforceable, the rest continue in force.
+          </LegalItem>
+          <LegalItem term="No waiver">
+            Not enforcing a right on one occasion does not waive it.
+          </LegalItem>
+          <LegalItem term="Assignment">
+            You may not transfer your rights under these terms. We may transfer ours to a
+            successor of the business.
+          </LegalItem>
+          <LegalItem term="Whole agreement">
+            These terms and the Privacy Policy are the entire agreement between us about
+            the site.
+          </LegalItem>
+          <LegalItem term="Events outside our control">
+            We are not liable for failure to provide the service caused by something
+            beyond our reasonable control.
+          </LegalItem>
+        </LegalList>
+      </LegalSection>
+
+      <LegalSection n={15} title="Changes to these terms">
         <p>
           We may update these terms. The date at the top shows when they last changed, and
           continuing to use the site after a change means you accept the updated terms.

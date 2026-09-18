@@ -1,58 +1,62 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { LegalItem, LegalList, LegalPage, LegalSection } from '../legal-ui';
+import { COMPANY, LEGAL_UPDATED } from '../company';
+import { LegalItem, LegalList, LegalPage, LegalSection, MailTo } from '../legal-ui';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'What HugFab collects, what it does not collect, how affiliate links work, and how to reach us about your data.',
+    'What HugFab collects, what it does not collect, how affiliate links work, your rights under the DPDP Act, and how to reach our Grievance Officer.',
   alternates: { canonical: '/privacy' },
 };
-
-const UPDATED = '18 September 2026';
 
 /**
  * Privacy Policy.
  *
- * Every factual claim here was checked against the code and the production
+ * Structured to the notice obligations in the Digital Personal Data
+ * Protection Act, 2023 — what is collected, why, the rights available, the
+ * means of exercising them, and who to complain to — rather than to the shape
+ * of a generic template. Section 10 exists because the DPDP Act and the
+ * Consumer Protection (E-Commerce) Rules, 2020 both require a named grievance
+ * contact to be published, not merely offered on request.
+ *
+ * Every factual claim was checked against the code and the live production
  * environment before it was written, because a privacy policy that describes
  * tracking the site does not do is as much a lie as one that hides tracking it
- * does. In particular: no analytics or error-reporting key is configured on the
- * production server, so neither PostHog nor Sentry is loaded or sent anything,
- * and `CLICK_IP_SALT` is unset, so no IP hash is written on a click-out.
+ * does. Specifically: no analytics or error-reporting key is configured in
+ * production, so neither PostHog nor Sentry is loaded or sent anything, and
+ * `CLICK_IP_SALT` is unset, so no IP hash is written on a click-out.
  *
- * If any of those change, this page changes in the same commit. That is not a
- * nicety — section 4 makes a promise about it.
+ * If any of those change, this page changes in the same commit. Section 4
+ * makes that an explicit promise.
  */
 export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated={UPDATED}
+      updated={LEGAL_UPDATED}
       intro="This explains what HugFab collects, what it deliberately does not, and what
         happens to your information when you click through to a retailer. It describes the
         site as it actually runs today, not as it might run later."
     >
       <LegalSection n={1} title="Who we are">
         <p>
-          HugFab is operated by <b className="text-text">tapashub Pvt Ltd</b>, a private
-          limited company incorporated in India, with its registered office at Manikonda,
-          Hyderabad, Telangana, India.
+          HugFab, at <b className="text-text">{COMPANY.website}</b>, is operated by{' '}
+          <b className="text-text">{COMPANY.legalName}</b>, a private limited company
+          incorporated in India. Its registered office is at{' '}
+          {COMPANY.addressLines.join(', ')}.
         </p>
         <p>
-          This policy applies to <b className="text-text">hugfab.com</b> and nothing else.
-          Once you leave for a retailer&rsquo;s site, that retailer&rsquo;s policy governs
-          what happens there.
+          In the language of the Digital Personal Data Protection Act, 2023, we are the{' '}
+          <i>data fiduciary</i> for the personal data described here, and you are the{' '}
+          <i>data principal</i>.
         </p>
         <p>
-          For anything in this document, write to{' '}
-          <a
-            className="text-primary font-medium hover:underline"
-            href="mailto:contact@hugfab.com"
-          >
-            contact@hugfab.com
-          </a>
-          .
+          This policy applies to this website and nothing else. Once you leave for a
+          retailer&rsquo;s site, that retailer&rsquo;s policy governs what happens there.
+        </p>
+        <p>
+          Customer care and privacy questions both go to <MailTo />.
         </p>
       </LegalSection>
 
@@ -77,7 +81,7 @@ export default function PrivacyPage() {
             When you follow a link to a retailer we record which product and retailer, the
             time, the page you came from, and — if you are signed in — your account. This
             is how a commission is attributed to us and how we detect fraudulent clicking.
-            See section 5 for what we do <i>not</i> record here.
+            See section 4 for what we do <i>not</i> record here.
           </LegalItem>
           <LegalItem term="Ordinary server logs">
             Our hosting provider keeps standard web server logs, which include IP
@@ -86,15 +90,21 @@ export default function PrivacyPage() {
         </LegalList>
       </LegalSection>
 
-      <LegalSection n={3} title="Why we hold it">
+      <LegalSection n={3} title="Why we hold it, and on what basis">
         <p>
           To give you an account and keep you signed in; to show you the things you saved;
           to attribute commissions and detect click fraud; to keep the service running and
-          secure; and to answer you when you contact us. We do not build advertising
-          profiles and we have no advertising business.
+          secure; and to answer you when you contact us.
         </p>
         <p>
-          We do not sell your personal data. We do not share it with advertisers or data
+          Account details and wishlists are processed on the consent you give when you
+          sign up and save things. Click records and server logs are processed for the
+          legitimate operation of the service — attribution of the commission that funds
+          it, fraud prevention, and security.
+        </p>
+        <p>
+          We do not build advertising profiles and we have no advertising business. We do
+          not sell your personal data, and we do not share it with advertisers or data
           brokers.
         </p>
       </LegalSection>
@@ -112,9 +122,9 @@ export default function PrivacyPage() {
           </LegalItem>
           <LegalItem term="No product analytics currently running">
             The site can be configured to use PostHog for product analytics. It is not
-            configured on hugfab.com: with no key set, the browser never downloads it and
-            nothing is sent. The same is true of Sentry, which the site can use for error
-            reports and which is likewise switched off.
+            configured here: with no key set, the browser never downloads it and nothing
+            is sent. The same is true of Sentry, which the site can use for error reports
+            and which is likewise switched off.
           </LegalItem>
           <LegalItem term="No IP address stored against your clicks">
             The click record described in section 2 has a field for a hashed IP address.
@@ -124,8 +134,8 @@ export default function PrivacyPage() {
           </LegalItem>
         </LegalList>
         <p>
-          If we ever switch any of these on, we will update this page and this date{' '}
-          <b className="text-text">before</b> it goes live, not after.
+          If we ever switch any of these on, we will update this page and the date at the
+          top <b className="text-text">before</b> it goes live, not after.
         </p>
       </LegalSection>
 
@@ -140,19 +150,15 @@ export default function PrivacyPage() {
           advertising or third-party tracking cookie is set by this site. If that changes,
           a consent mechanism will arrive in the same change.
         </p>
-        <p>
-          Retailers and affiliate networks set their own cookies once you are on their
-          side of a click — see the next section.
-        </p>
       </LegalSection>
 
       <LegalSection n={6} title="Affiliate links">
         <p>
           Some links from HugFab to a retailer are affiliate links. If you buy something
-          after following one, the retailer may pay us a commission. It costs you nothing
-          and it does not change the price you pay, and it does not affect the order
-          offers are shown in — offers are sorted by price and availability, never by what
-          they pay us.
+          after following one, the retailer may pay us a commission. It costs you nothing,
+          it does not change the price you pay, and it does not affect the order offers
+          are shown in — offers are sorted by price and availability, never by what they
+          pay us.
         </p>
         <p>
           Following such a link may route you through an affiliate network&rsquo;s
@@ -178,50 +184,93 @@ export default function PrivacyPage() {
         </LegalList>
         <p>
           Each is used for the purpose named and nothing else. Some of them operate
-          servers outside India, which means your information may be processed outside
+          servers outside India, which means your personal data may be processed outside
           India.
         </p>
       </LegalSection>
 
       <LegalSection n={8} title="How long we keep it">
         <p>
-          Account details and wishlists are kept for as long as your account exists. Click
-          records are kept as a financial and anti-fraud record. Ask us to delete your
-          account and we will delete your account details and wishlists.
+          Account details and wishlists are kept for as long as your account exists, and
+          are deleted when you ask us to close it. Click records are kept as a commercial
+          and anti-fraud record; where one is linked to an account, that link is severed
+          when the account is deleted, leaving a record that identifies nobody.
+        </p>
+        <p>
+          We do not keep personal data for longer than the purpose it was collected for
+          requires, except where a law obliges us to retain it.
         </p>
       </LegalSection>
 
-      <LegalSection n={9} title="Your rights">
+      <LegalSection n={9} title="Your rights, and how to use them">
+        <p>Under the Digital Personal Data Protection Act, 2023 you may:</p>
+        <LegalList>
+          <LegalItem term="Ask what we hold">
+            A summary of the personal data we process about you, what we do with it, and
+            who we have shared it with.
+          </LegalItem>
+          <LegalItem term="Correct or complete it">
+            Have inaccurate or incomplete data corrected, completed or updated.
+          </LegalItem>
+          <LegalItem term="Have it erased">
+            Ask us to delete personal data we no longer need for the purpose it was
+            collected for.
+          </LegalItem>
+          <LegalItem term="Withdraw consent">
+            Withdraw a consent you gave, as easily as you gave it. Doing so does not undo
+            processing already carried out.
+          </LegalItem>
+          <LegalItem term="Nominate someone">
+            Name a person to exercise these rights on your behalf if you die or become
+            incapable of exercising them.
+          </LegalItem>
+          <LegalItem term="Complain">
+            Raise a grievance with us, and escalate to the Data Protection Board of India
+            if we do not resolve it.
+          </LegalItem>
+        </LegalList>
         <p>
-          Under India&rsquo;s Digital Personal Data Protection Act, 2023 you may ask us
-          for a summary of the personal data we hold about you and what we do with it, ask
-          us to correct or complete it, ask us to erase it, withdraw a consent you gave
-          us, and nominate someone to exercise these rights if you die or become
-          incapacitated.
+          <b className="text-text">How to make a request.</b> Email <MailTo /> from the
+          address on your account — that address is what we use to identify you, and a
+          request from another one cannot be honoured without it. Say which of the above
+          you want. We will respond within the timeframe in section 10.
         </p>
         <p>
           There is no self-service delete button in your account settings yet. Until there
-          is, email{' '}
-          <a
-            className="text-primary font-medium hover:underline"
-            href="mailto:contact@hugfab.com"
-          >
-            contact@hugfab.com
-          </a>{' '}
-          from the address on the account and we will act on it. We would rather say that
-          plainly than point you at a button that does not exist.
+          is, the mailbox above is the route, and we would rather say so plainly than
+          point you at a button that does not exist.
         </p>
       </LegalSection>
 
-      <LegalSection n={10} title="Children">
+      <LegalSection n={10} title="Grievance Officer">
         <p>
-          HugFab is not directed at children and we do not knowingly collect personal data
-          from anyone under 18. If you believe a child has given us personal data, write
-          to us and we will delete it.
+          If you are unhappy with how we have handled your personal data or your request,
+          write to our Grievance Officer at <MailTo />, with &ldquo;Grievance&rdquo; in
+          the subject line.
+        </p>
+        <p>
+          We will acknowledge your complaint within{' '}
+          <b className="text-text">{COMPANY.grievanceAcknowledgeHours} hours</b> and
+          resolve it within{' '}
+          <b className="text-text">{COMPANY.grievanceResolveDays} days</b> of receipt, as
+          required by the Consumer Protection (E-Commerce) Rules, 2020.
+        </p>
+        <p>
+          If we do not resolve it to your satisfaction, you may complain to the Data
+          Protection Board of India.
         </p>
       </LegalSection>
 
-      <LegalSection n={11} title="Security">
+      <LegalSection n={11} title="Children">
+        <p>
+          HugFab is not directed at children, and we do not knowingly collect personal
+          data from anyone under 18. We do not carry out any tracking, behavioural
+          monitoring or targeted advertising — of children or of anyone else. If you
+          believe a child has given us personal data, write to us and we will delete it.
+        </p>
+      </LegalSection>
+
+      <LegalSection n={12} title="Security">
         <p>
           Access to stored data is governed by row-level security rules in the database,
           so one account cannot read another&rsquo;s wishlist. The site is served over
@@ -229,7 +278,7 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection n={12} title="Changes">
+      <LegalSection n={13} title="Changes">
         <p>
           When this policy changes, the date at the top changes with it. Changes that
           affect what we collect will be made before the collection starts, not
