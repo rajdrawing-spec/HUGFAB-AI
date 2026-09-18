@@ -73,6 +73,26 @@ export const metadata: Metadata = {
     title: 'HugFab — See it. Style it. Shop it.',
     description: DESCRIPTION,
   },
+  /**
+   * Site-ownership proof for Mitgo, Admitad's parent, which is how a publisher
+   * account verifies it controls the domain it has registered. Admitad reads
+   * this tag from the live homepage when "Verify" is pressed, so it has to be
+   * deployed before that — not after.
+   *
+   * Committed rather than held in an environment variable on purpose. The
+   * value is public by design: it is served to every visitor in the page head,
+   * and it proves nothing on its own — anyone reading it already had the HTML.
+   * It is not a credential, and the credentials it sits near (the OAuth client
+   * secret, the postback key) must never follow it into the repository.
+   *
+   * Delete it once Admitad reports the domain verified; a verification tag
+   * outlives its purpose and then just sits in every page forever.
+   */
+  verification: {
+    other: {
+      'mitgo-verification': '59044b2f-6a17-41d8-ba12-f14abae455c7',
+    },
+  },
 };
 
 export const viewport: Viewport = {
