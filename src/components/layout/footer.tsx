@@ -26,6 +26,9 @@ export function Footer() {
               <FooterLink href="/about">About</FooterLink>
             </li>
             <li>
+              <FooterLink href="/how-it-works">How it works</FooterLink>
+            </li>
+            <li>
               <FooterLink href="/contact">Contact</FooterLink>
             </li>
           </ul>
