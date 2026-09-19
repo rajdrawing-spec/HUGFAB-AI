@@ -171,6 +171,23 @@
     left: 0.5rem;
     top: 0.5rem;
   }
+
+  /*
+    A row that may scroll sideways within itself, without a scrollbar drawn
+    across it. Used by the header nav, where the alternative is the page
+    scrolling instead — the bar is 40px tall and a scrollbar inside it would
+    take a quarter of that and sit under the links.
+
+    The content stays reachable by keyboard, wheel and touch; only the painted
+    bar is suppressed.
+  */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

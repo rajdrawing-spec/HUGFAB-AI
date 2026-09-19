@@ -11,22 +11,37 @@ export interface HeaderProps {
 export function Header({ userEmail = null }: HeaderProps) {
   return (
     <header className="border-border bg-background/85 sticky top-0 z-40 border-b backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
-        <Link href="/" aria-label="HugFab home" className="text-text">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:gap-6 sm:px-6">
+        <Link href="/" aria-label="HugFab home" className="text-text shrink-0">
           <Logo className="text-h3" />
         </Link>
 
-        <nav aria-label="Primary" className="hidden flex-1 md:block">
-          <ul className="flex items-center gap-1">
+        {/*
+          `min-w-0` is what stops the page scrolling sideways.
+
+          A flex item will not shrink below the width of its own content unless
+          it is told it may, so without this the six nav links set a floor on
+          the header's width and everything past the viewport spills out —
+          which it did, on every page, at any width between 768px and roughly
+          900px. That is the whole tablet range, and a sideways-scrolling page
+          is the most obvious "this site is broken" signal there is.
+
+          Paired with `overflow-x-auto` on the list: when the row genuinely
+          cannot fit, the nav scrolls within itself and the page does not move.
+          Nothing becomes unreachable, and the logo and account controls keep
+          their position.
+        */}
+        <nav aria-label="Primary" className="hidden min-w-0 flex-1 md:block">
+          <ul className="flex scrollbar-none items-center gap-1 overflow-x-auto">
             {PRIMARY_NAV.map((link) => (
-              <li key={link.href}>
+              <li key={link.href} className="shrink-0">
                 <NavItem {...link} />
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           <ul className="hidden items-center gap-1 sm:flex">
             {UTILITY_NAV.map((link) => (
               <li key={link.href}>
@@ -38,15 +53,22 @@ export function Header({ userEmail = null }: HeaderProps) {
           {userEmail ? (
             <Link
               href="/settings"
-              className="text-small text-muted hover:bg-surface-2 hover:text-text rounded-md px-3 py-2 transition-colors"
+              // An email address has no maximum length. Capped and truncated so
+              // a long one cannot widen the header past the viewport.
+              className="text-small text-muted hover:bg-surface-2 hover:text-text max-w-[12rem] truncate rounded-md px-3 py-2 transition-colors"
             >
               {userEmail}
             </Link>
           ) : (
             <>
+              {/*
+                Hidden in the narrow band where the nav is already scrolling.
+                Nothing is lost: /signup carries a link to /login, and below
+                `sm` the bottom bar covers account access.
+              */}
               <Link
                 href="/login"
-                className="text-small text-muted hover:bg-surface-2 hover:text-text rounded-md px-3 py-2 transition-colors"
+                className="text-small text-muted hover:bg-surface-2 hover:text-text hidden rounded-md px-3 py-2 transition-colors lg:inline-block"
               >
                 Log in
               </Link>

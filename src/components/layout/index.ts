@@ -1,4 +1,5 @@
 export { AnalyticsProvider } from './analytics-provider';
+export { DemoNotice } from './demo-notice';
 export { BottomNavigation } from './bottom-navigation';
 export { Footer } from './footer';
 export { Header, type HeaderProps } from './header';

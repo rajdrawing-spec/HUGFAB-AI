@@ -38,7 +38,8 @@ export function PriceComparison({ offers, isMock = false }: PriceComparisonProps
     <div className="border-border bg-surface overflow-hidden rounded-lg border">
       {isMock && (
         <p className="bg-warning-soft text-warning text-caption border-border border-b px-4 py-2 font-semibold">
-          MOCK DATA — these prices are invented for development and are not live.
+          DEMO PRODUCT — illustrative prices at invented stores. Nothing here is a real
+          offer and nothing can be bought.
         </p>
       )}
 
@@ -111,22 +112,40 @@ export function PriceComparison({ offers, isMock = false }: PriceComparisonProps
                   </td>
 
                   <td className="px-4 py-4 text-right">
-                    <a
-                      href={offer.clickPath}
-                      // Attribution is recorded by our own route, so this is a
-                      // normal navigation — not a prefetched Next link, which
-                      // would fire the click-out without a user clicking it.
-                      rel="nofollow sponsored noopener"
-                      className={cn(
-                        'text-button inline-flex h-10 items-center rounded-full px-5 font-semibold transition-colors',
-                        available
-                          ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
-                          : 'border-border-strong text-muted pointer-events-none border opacity-60',
-                      )}
-                      aria-disabled={!available}
-                    >
-                      {available ? 'Buy' : 'Unavailable'}
-                    </a>
+                    {/*
+                      A demo row gets no link at all, and this is the important
+                      case rather than a tidy-up. The click-out route refuses
+                      mock products by design, so a rendered Buy button here
+                      would be an affiliate link that leads nowhere — which is
+                      both a broken journey and, on a page carrying a
+                      commission disclosure, a claim that is not true. A
+                      disabled control states the position instead.
+                    */}
+                    {isMock ? (
+                      <span
+                        className="text-button border-border-strong text-muted inline-flex h-10 cursor-not-allowed items-center rounded-full border px-5 font-semibold opacity-70"
+                        aria-disabled="true"
+                      >
+                        Demo only
+                      </span>
+                    ) : (
+                      <a
+                        href={offer.clickPath}
+                        // Attribution is recorded by our own route, so this is a
+                        // normal navigation — not a prefetched Next link, which
+                        // would fire the click-out without a user clicking it.
+                        rel="nofollow sponsored noopener"
+                        className={cn(
+                          'text-button inline-flex h-10 items-center rounded-full px-5 font-semibold transition-colors',
+                          available
+                            ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+                            : 'border-border-strong text-muted pointer-events-none border opacity-60',
+                        )}
+                        aria-disabled={!available}
+                      >
+                        {available ? 'Buy' : 'Unavailable'}
+                      </a>
+                    )}
                   </td>
                 </tr>
               );
@@ -135,9 +154,17 @@ export function PriceComparison({ offers, isMock = false }: PriceComparisonProps
         </table>
       </div>
 
-      {/* Required wherever an affiliate link appears, not only in the footer (PRD §74). */}
+      {/*
+        Required wherever an affiliate link appears, not only in the footer
+        (PRD §74) — and equally required NOT to appear where there is no such
+        link. A demo table carries no outbound links and earns nothing, so
+        claiming a commission on it would be a false disclosure rather than a
+        cautious one.
+      */}
       <p className="text-caption text-muted border-border border-t px-4 py-3">
-        HugFab earns a commission on some purchases made through these links.
+        {isMock
+          ? 'No affiliate links are active on this product. Retailer connections are still being set up.'
+          : 'HugFab earns a commission on some purchases made through these links.'}
       </p>
     </div>
   );

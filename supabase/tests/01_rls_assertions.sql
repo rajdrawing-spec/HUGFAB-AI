@@ -490,7 +490,12 @@ declare page_rows integer; reported bigint; everything integer;
 begin
   select count(*), max(total_count) into page_rows, reported
     from public.search_products(include_mock => true, page_limit => 1);
-  select count(*) into everything from public.search_products(include_mock => true);
+  -- page_limit has to be raised explicitly. It defaults to 24, so counting
+  -- "everything" without it counts one default page — which is the very
+  -- confusion this assertion exists to catch, and which it fell for itself the
+  -- moment the catalogue grew past 24 rows.
+  select count(*) into everything
+    from public.search_products(include_mock => true, page_limit => 100000);
   if page_rows <> 1 then
     raise exception 'page_limit => 1 returned % rows', page_rows;
   end if;

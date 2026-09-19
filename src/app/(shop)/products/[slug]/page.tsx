@@ -4,7 +4,12 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { absoluteUrl, canonicalPath } from '@/lib/site-url';
 import { Badge } from '@/components/ui';
-import { PriceDisplay, PriceComparison, TrustRow } from '@/components/product';
+import {
+  PriceDisplay,
+  PriceComparison,
+  ProductImagePlaceholder,
+  TrustRow,
+} from '@/components/product';
 import { getProductBySlug } from '@/modules/products/service';
 import { productSlugSchema } from '@/modules/products/schema';
 
@@ -72,25 +77,16 @@ export default async function ProductPage({ params }: PageProps) {
               className="object-cover"
             />
           ) : (
-            <div className="text-muted/40 flex h-full items-center justify-center">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                aria-hidden="true"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <path d="m21 15-5-5L5 21" />
-              </svg>
-            </div>
+            <ProductImagePlaceholder
+              slug={product.slug}
+              title={product.title}
+              size="lg"
+            />
           )}
           {product.isMock && (
             <span className="absolute top-3 left-3">
               <Badge tone="warning" variant="solid">
-                MOCK DATA
+                DEMO
               </Badge>
             </span>
           )}

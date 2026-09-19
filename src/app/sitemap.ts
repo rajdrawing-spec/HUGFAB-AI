@@ -38,14 +38,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // The standing pages. They change rarely and rank for nothing, but a
     // crawler — and an affiliate network's reviewer — reaching them from the
     // sitemap rather than only from the footer is worth the four lines.
-    ...(['/about', '/how-it-works', '/contact', '/privacy', '/terms'] as const).map(
-      (path) => ({
-        url: absoluteUrl(path),
-        lastModified: now,
-        changeFrequency: 'monthly' as const,
-        priority: 0.3,
-      }),
-    ),
+    ...(
+      [
+        '/about',
+        '/how-it-works',
+        '/categories',
+        '/contact',
+        '/privacy',
+        '/terms',
+        '/affiliate-disclosure',
+      ] as const
+    ).map((path) => ({
+      url: absoluteUrl(path),
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.3,
+    })),
   ];
 
   const products = await listIndexableProducts();
