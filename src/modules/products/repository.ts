@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { isProduction } from '@/lib/env.server';
+import { cache } from 'react';
+
 import { ApiError } from '@/lib/http';
 import { logger } from '@/lib/logger';
 import { createPublicSupabase } from '@/lib/supabase/public';
@@ -24,13 +25,49 @@ import {
  */
 
 /**
- * Development seed rows are excluded in production, full stop. The flag is not
- * a request parameter: a client must never be able to ask for invented prices
- * (PRD §60, §69).
+ * Whether the labelled demo catalogue is switched on for this deployment.
+ *
+ * The answer is a row in `app_settings`, read through `mock_products_allowed()`
+ * — the same function the RLS policies consult. That is the point: application
+ * and database cannot disagree about what is visible, because they are reading
+ * the same switch.
+ *
+ * It is not a request parameter and never will be. A caller asking for mock
+ * rows is overruled by RLS regardless (supabase/tests/01_rls_assertions.sql
+ * asserts exactly that), so the worst a wrong answer here can do is hide rows
+ * that were allowed — never reveal rows that were not.
+ *
+ * `cache()` scopes the lookup to one request, so a page that searches and then
+ * renders a rail does not ask twice.
+ *
+ * Fails closed. If the flag cannot be read, the demo catalogue is off.
  */
-function includeMockRows(): boolean {
-  return !isProduction;
-}
+export const demoCatalogueEnabled = cache(async (): Promise<boolean> => {
+  const supabase = createPublicSupabase();
+  if (supabase === null) return false;
+
+  try {
+    const { data, error } = await (
+      supabase as unknown as {
+        rpc(fn: 'mock_products_allowed'): PromiseLike<{
+          data: unknown;
+          error: { message: string } | null;
+        }>;
+      }
+    ).rpc('mock_products_allowed');
+
+    if (error) {
+      logger.warn('demo catalogue flag could not be read', { cause: error.message });
+      return false;
+    }
+    return data === true;
+  } catch (error) {
+    logger.warn('demo catalogue flag could not be read', {
+      cause: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+});
 
 export interface SearchResult {
   rows: SearchRow[];
@@ -82,7 +119,7 @@ export async function searchProducts(params: ProductSearchParams): Promise<Searc
     min_price_minor: params.minPrice ?? null,
     max_price_minor: params.maxPrice ?? null,
     in_stock_only: params.inStock ?? false,
-    include_mock: includeMockRows(),
+    include_mock: await demoCatalogueEnabled(),
     sort_by: params.sort,
     page_limit: params.perPage,
     page_offset: (params.page - 1) * params.perPage,
@@ -128,7 +165,9 @@ export async function findProductBySlug(slug: string) {
   }
   if (!data) return null;
 
-  if (!includeMockRows() && (data as { is_mock?: boolean }).is_mock) {
+  // RLS has already excluded the row if the demo catalogue is off; this is the
+  // belt to that brace, and it keeps the rule legible from the application side.
+  if ((data as { is_mock?: boolean }).is_mock && !(await demoCatalogueEnabled())) {
     return null;
   }
 
@@ -139,11 +178,14 @@ export async function findProductBySlug(slug: string) {
  * Slugs for the sitemap: active, real, indexable products.
  *
  * Reads through the anonymous client rather than the request-scoped one, so it
- * works during static generation where `cookies()` does not exist. RLS still
- * applies, and `is_mock` is excluded explicitly on top of it — the policy hides
- * mock rows in any hosted environment, but a sitemap is a production artefact
- * and must never list invented products even when generated from a developer's
- * machine with the local flag on.
+ * works during static generation where `cookies()` does not exist.
+ *
+ * `is_mock` is excluded unconditionally here, and that is not redundant with
+ * RLS: the demo catalogue is deliberately visible in production while
+ * affiliate approval is pending, so the policy would happily return those rows.
+ * A sitemap is a promise to a search engine that these URLs are worth indexing,
+ * and a demo product is not. The product page agrees — it sets `robots:
+ * noindex` for the same rows.
  *
  * Never throws. A sitemap missing its products is a degraded sitemap; a
  * sitemap that fails the build is a failed deploy.
@@ -223,6 +265,56 @@ export async function listTopCategories(limit = 9): Promise<CategorySummary[]> {
     });
   } catch (error) {
     logger.warn('category lookup threw', {
+      cause: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}
+
+/**
+ * Every category, grouped under its top-level parent, for the categories page.
+ *
+ * One query and an in-memory grouping rather than a recursive CTE: the tree is
+ * two levels deep and a few dozen rows, so a second round trip would cost more
+ * than the grouping does.
+ *
+ * Never throws, for the same reason `listTopCategories` does not — a browse
+ * page that renders without its list is a worse page, but a browse page that
+ * 500s is a broken one.
+ */
+export interface CategoryGroup {
+  parent: CategorySummary;
+  children: CategorySummary[];
+}
+
+export async function listCategoryTree(): Promise<CategoryGroup[]> {
+  const supabase = createPublicSupabase();
+  if (supabase === null) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, slug, name, parent_id')
+      .order('position', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error) {
+      logger.warn('category tree could not be loaded', { cause: error.message });
+      return [];
+    }
+
+    type Row = { id: string; slug: string; name: string; parent_id: string | null };
+    const rows = (data ?? []) as Row[];
+
+    const parents = rows.filter((r) => r.parent_id === null);
+    return parents.map((parent) => ({
+      parent: { id: parent.id, slug: parent.slug, name: parent.name, imageUrl: null },
+      children: rows
+        .filter((r) => r.parent_id === parent.id)
+        .map((c) => ({ id: c.id, slug: c.slug, name: c.name, imageUrl: null })),
+    }));
+  } catch (error) {
+    logger.warn('category tree lookup threw', {
       cause: error instanceof Error ? error.message : String(error),
     });
     return [];

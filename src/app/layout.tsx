@@ -1,9 +1,16 @@
 import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Caveat, Poppins } from 'next/font/google';
-import { AnalyticsProvider, BottomNavigation, Footer, Header } from '@/components/layout';
+import {
+  AnalyticsProvider,
+  BottomNavigation,
+  DemoNotice,
+  Footer,
+  Header,
+} from '@/components/layout';
 import { ToastProvider } from '@/components/ui';
 import { getCurrentUser } from '@/lib/auth';
+import { demoCatalogueEnabled } from '@/modules/products/repository';
 import { SITE_URL } from '@/lib/site-url';
 import '@/styles/globals.css';
 
@@ -91,10 +98,10 @@ export const metadata: Metadata = {
   verification: {
     other: {
       // Reissued on each submission of the ad space for approval — this is the
-      // third. Always replaced, never added alongside the previous one: two
+      // fourth. Always replaced, never added alongside the previous one: two
       // meta tags sharing a name leave the reader to pick, and a verifier that
       // takes the first would check a stale value and fail.
-      'mitgo-verification': '8fca7076-2a4b-4399-8f99-d3322feacc78',
+      'mitgo-verification': '8e67b215-9995-4ede-b34b-be0b0b28fc5a',
     },
   },
 };
@@ -112,6 +119,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await getCurrentUser();
+  const demoCatalogue = await demoCatalogueEnabled();
 
   return (
     <html
@@ -129,6 +137,14 @@ export default async function RootLayout({
           </a>
 
           <Header userEmail={user?.email ?? null} />
+
+          {/*
+            Under the header rather than above it, so it does not push the
+            brand and search off the top of a phone screen, and resolved in
+            the layout so it is part of the first paint rather than appearing a
+            moment after the page settles.
+          */}
+          <DemoNotice enabled={demoCatalogue} />
 
           {/* pb-16 clears the mobile bottom bar; md:pb-0 once it is hidden. */}
           <main id="main" className="flex-1 pb-16 md:pb-0">

@@ -19,3 +19,4 @@ export {
   type TrustClaimKind,
   type TrustRowProps,
 } from './trust-row';
+export { ProductImagePlaceholder } from './product-image';

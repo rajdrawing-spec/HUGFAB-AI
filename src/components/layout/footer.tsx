@@ -17,7 +17,7 @@ export function Footer() {
           </p>
         </div>
 
-        <nav aria-label="Footer" className="flex gap-12">
+        <nav aria-label="Footer" className="flex flex-wrap gap-x-12 gap-y-8">
           <ul className="text-small flex flex-col gap-2">
             <li className="text-caption text-muted font-medium tracking-wide uppercase">
               Company
@@ -34,6 +34,17 @@ export function Footer() {
           </ul>
           <ul className="text-small flex flex-col gap-2">
             <li className="text-caption text-muted font-medium tracking-wide uppercase">
+              Shop
+            </li>
+            <li>
+              <FooterLink href="/categories">Categories</FooterLink>
+            </li>
+            <li>
+              <FooterLink href="/search">Search</FooterLink>
+            </li>
+          </ul>
+          <ul className="text-small flex flex-col gap-2">
+            <li className="text-caption text-muted font-medium tracking-wide uppercase">
               Legal
             </li>
             <li>
@@ -41,6 +52,9 @@ export function Footer() {
             </li>
             <li>
               <FooterLink href="/terms">Terms</FooterLink>
+            </li>
+            <li>
+              <FooterLink href="/affiliate-disclosure">Affiliate Disclosure</FooterLink>
             </li>
           </ul>
         </nav>
@@ -53,7 +67,14 @@ export function Footer() {
             future
           </p>
           {/* Required disclosure wherever affiliate links appear (PRD §74). */}
-          <p>HugFab earns a commission on some purchases made through our links.</p>
+          <p>
+            <Link
+              href="/affiliate-disclosure"
+              className="hover:text-text underline-offset-2 transition-colors hover:underline"
+            >
+              HugFab earns a commission on some purchases made through our links.
+            </Link>
+          </p>
         </div>
       </div>
     </footer>

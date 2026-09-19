@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui';
 import type { ProductSummary } from '@/modules/products/types';
 import { PriceDisplay } from './price-display';
+import { ProductImagePlaceholder } from './product-image';
 import { RetailerBadge } from './retailer-badge';
 
 /**
@@ -36,13 +37,18 @@ export function ProductCard({ product }: ProductCardProps) {
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <ImagePlaceholder />
+          <ProductImagePlaceholder slug={product.slug} title={product.title} />
         )}
 
+        {/*
+          "DEMO" rather than "MOCK DATA": this badge is read by shoppers now,
+          not only by developers, and it has to be understood at a glance by
+          someone who has never heard the word "mock".
+        */}
         {product.isMock && (
           <span className="absolute top-2 left-2">
             <Badge tone="warning" variant="solid">
-              MOCK DATA
+              DEMO
             </Badge>
           </span>
         )}
@@ -89,25 +95,6 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
     </article>
-  );
-}
-
-function ImagePlaceholder() {
-  return (
-    <div className="text-muted/40 flex h-full items-center justify-center">
-      <svg
-        viewBox="0 0 24 24"
-        className="size-10"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        aria-hidden="true"
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <path d="m21 15-5-5L5 21" />
-      </svg>
-    </div>
   );
 }
 
