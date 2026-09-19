@@ -17,7 +17,8 @@
     "format:check": "prettier --check .",
     "lint:fix": "eslint . --fix",
     "db:verify": "./scripts/verify-migration.sh",
-    "ingest": "tsx --conditions=react-server scripts/ingest.ts"
+    "ingest": "tsx --conditions=react-server scripts/ingest.ts",
+    "affiliate:status": "tsx --conditions=react-server scripts/affiliate-status.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.73.0",
