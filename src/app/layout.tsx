@@ -98,10 +98,10 @@ export const metadata: Metadata = {
   verification: {
     other: {
       // Reissued on each submission of the ad space for approval — this is the
-      // third. Always replaced, never added alongside the previous one: two
+      // fourth. Always replaced, never added alongside the previous one: two
       // meta tags sharing a name leave the reader to pick, and a verifier that
       // takes the first would check a stale value and fail.
-      'mitgo-verification': '8fca7076-2a4b-4399-8f99-d3322feacc78',
+      'mitgo-verification': '8e67b215-9995-4ede-b34b-be0b0b28fc5a',
     },
   },
 };
