@@ -147,6 +147,55 @@ export interface AffiliateProvider {
 
   /** Wrap a retailer URL in this network's tracking parameters. */
   buildTrackedUrl(productUrl: string, subId?: string): string;
+
+  /**
+   * Ask the network what this account can actually see: which ad spaces exist,
+   * which programmes are joinable, which are already joined.
+   *
+   * Optional because it is not a capability every network has, and a network
+   * without it must not be forced to fake one. `affiliate:status` reports that
+   * the adapter cannot introspect rather than printing an empty result that
+   * looks like "you are approved for nothing".
+   *
+   * Read-only by contract. Nothing here joins a programme or changes account
+   * state — that is a decision for a person in the dashboard, not a script.
+   */
+  describeAccount?(): Promise<ProviderAccountReport>;
+}
+
+/**
+ * What an account looks like from the outside, normalised across networks.
+ *
+ * Deliberately shallow. Every network models programmes and placements
+ * differently, and flattening those differences into a rich shared type would
+ * mean guessing at fields this code has never seen a real response for. Each
+ * entry therefore carries the few things every network has — an id, a label, a
+ * state — plus `raw`, which is whatever the network actually sent.
+ *
+ * That last field is the point: the first time this runs against a live
+ * account, `raw` is the evidence for what the real shape is, and the typed
+ * fields can be tightened afterwards against something observed rather than
+ * assumed.
+ */
+export interface ProviderAccountEntry {
+  id: string;
+  label: string;
+  /** The network's own status string, verbatim. Not interpreted. */
+  status: string | null;
+  raw: Record<string, unknown>;
+}
+
+export interface ProviderAccountReport {
+  /** Placements — Admitad calls these ad spaces or websites. */
+  adSpaces: ProviderAccountEntry[];
+  /** Programmes this account may join or has joined. */
+  programmes: ProviderAccountEntry[];
+  /**
+   * Anything the adapter could not retrieve, with the reason. A partial report
+   * is more useful than an exception: "ad spaces read, programmes refused with
+   * 403" locates the problem, where a thrown error only says something failed.
+   */
+  problems: string[];
 }
 
 /**
